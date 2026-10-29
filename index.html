@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Refer & Earn Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAKUIZI7zy6Cypfb9D4VgRyONyQmxUPh_0n9THdfJ96lpZDnrDX3Qv7rUEUTuHW8XX/exec";
+  </script>
+
+  <!-- Login / Setup Password Screen -->
+  <div id="loginSection" class="min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-slate-100">
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl font-bold">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <h1 class="text-2xl font-bold text-slate-900">Student Referral Hub</h1>
+        <p class="text-sm text-slate-500 mt-1">Apne registered mobile number se login karein</p>
+      </div>
+
+      <!-- Step 1: Enter Phone Number -->
+      <div id="phoneStep">
+        <form onsubmit="handlePhoneSubmit(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Registered Mobile Number</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 font-medium">+91</span>
+              <input type="tel" id="inputPhone" required maxlength="10" placeholder="9876543210"
+                class="w-full pl-12 pr-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 font-medium" />
+            </div>
+          </div>
+          <button type="submit" id="phoneContinueBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition-all shadow">
+            Continue <i class="fa-solid fa-arrow-right ml-1"></i>
+          </button>
+        </form>
+      </div>
+
+      <!-- Step 2A: Enter Password (If already set) -->
+      <div id="loginPassStep" class="hidden">
+        <form onsubmit="handlePasswordLogin(event)" class="space-y-4">
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label class="block text-xs font-semibold uppercase text-slate-500">Enter Password</label>
+              <button type="button" onclick="resetToPhoneStep()" class="text-xs text-indigo-600 font-medium">Change Number</button>
+            </div>
+            <input type="password" id="loginPassword" required placeholder="••••••••"
+              class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 font-medium" />
+          </div>
+          <button type="submit" id="loginSubmitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition-all shadow">
+            Sign In to Dashboard
+          </button>
+        </form>
+      </div>
+
+      <!-- Step 2B: Create Password (For First Time Login) -->
+      <div id="createPassStep" class="hidden">
+        <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 mb-4 font-medium">
+          Aapka pehli baar login hai. Aage ke liye apna secret password create karein.
+        </div>
+        <form onsubmit="handleCreatePassword(event)" class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Create Password</label>
+            <input type="password" id="newPassword" required placeholder="Minimum 4 characters" minlength="4"
+              class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 font-medium" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Confirm Password</label>
+            <input type="password" id="confirmPassword" required placeholder="Re-enter password" minlength="4"
+              class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 font-medium" />
+          </div>
+          <button type="submit" id="createPassBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-lg transition-all shadow mt-2">
+            Save Password & Login
+          </button>
+        </form>
+      </div>
+
+      <div id="authAlert" class="mt-4 text-center text-xs font-medium text-rose-600 hidden"></div>
+    </div>
+  </div>
+
+  <!-- Dashboard Section -->
+  <div id="dashboardSection" class="hidden min-h-screen flex flex-col">
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+          <div class="bg-indigo-600 text-white p-2 rounded-lg"><i class="fa-solid fa-award"></i></div>
+          <div>
+            <h1 class="font-bold text-slate-900 leading-none">Referral Hub</h1>
+            <span id="navUserName" class="text-xs text-slate-500 font-medium">Student</span>
+          </div>
+        </div>
+        <div class="flex items-center space-x-3">
+          <button onclick="openProfileModal()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">
+            <i class="fa-solid fa-wallet mr-1"></i> Bank/UPI Details
+          </button>
+          <button onclick="handleLogout()" class="text-slate-400 hover:text-slate-600 text-sm">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+      
+      <!-- Metrics Overview -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-xs text-slate-500 font-medium">Total Clicks/Leads</p>
+          <p id="statTotalReferrals" class="text-2xl font-bold text-slate-900 mt-1">0</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-xs text-slate-500 font-medium">Sales Converted</p>
+          <p id="statTotalSales" class="text-2xl font-bold text-slate-900 mt-1">0</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-xs text-slate-500 font-medium">Total Earned</p>
+          <p id="statTotalEarnings" class="text-2xl font-bold text-indigo-600 mt-1">₹0</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-emerald-200 shadow-sm bg-emerald-50/40">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-xs text-emerald-800 font-medium">Claimable Balance</p>
+              <p id="statAvailableBalance" class="text-2xl font-bold text-emerald-600 mt-1">₹0</p>
+            </div>
+            <button onclick="openClaimModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow">
+              Claim Now
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Courses -->
+      <div class="space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="text-lg font-bold text-slate-900">Your Referral Courses</h2>
+          <span class="text-xs text-slate-500 bg-slate-200 px-2 py-0.5 rounded">Share & Earn</span>
+        </div>
+        <div id="coursesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+      </div>
+
+      <!-- Tables -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+          <h3 class="font-bold text-sm text-slate-900 mb-3"><i class="fa-solid fa-receipt text-indigo-500 mr-2"></i>Sales Commission Log</h3>
+          <div class="overflow-x-auto max-h-60 overflow-y-auto text-xs">
+            <table class="w-full text-left">
+              <thead class="bg-slate-50 text-slate-500 border-b">
+                <tr>
+                  <th class="py-2 px-2">Course</th>
+                  <th class="py-2 px-2">Buyer</th>
+                  <th class="py-2 px-2">Commission</th>
+                </tr>
+              </thead>
+              <tbody id="salesTableBody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+          <h3 class="font-bold text-sm text-slate-900 mb-3"><i class="fa-solid fa-building-columns text-emerald-500 mr-2"></i>Payout Status</h3>
+          <div class="overflow-x-auto max-h-60 overflow-y-auto text-xs">
+            <table class="w-full text-left">
+              <thead class="bg-slate-50 text-slate-500 border-b">
+                <tr>
+                  <th class="py-2 px-2">Claim ID</th>
+                  <th class="py-2 px-2">Amount</th>
+                  <th class="py-2 px-2">Status</th>
+                  <th class="py-2 px-2">UTR/Ref</th>
+                </tr>
+              </thead>
+              <tbody id="claimsTableBody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Profile Modal -->
+  <div id="profileModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-bold text-slate-900">Bank & UPI Settings</h3>
+        <button onclick="closeProfileModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form onsubmit="handleProfileSubmit(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="font-semibold text-slate-700">Full Name</label>
+          <input type="text" id="profName" class="w-full mt-1 p-2 border rounded-lg" required />
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700">UPI ID (GPay / Paytm / BHIM)</label>
+          <input type="text" id="profUpi" placeholder="username@okhdfcbank" class="w-full mt-1 p-2 border rounded-lg" />
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700">PhonePe Number</label>
+          <input type="tel" id="profPhonePe" placeholder="10-digit number" class="w-full mt-1 p-2 border rounded-lg" />
+        </div>
+        <div class="pt-2 border-t border-slate-100">
+          <label class="font-semibold text-slate-700">Bank Account Number</label>
+          <input type="text" id="profBankAcc" class="w-full mt-1 p-2 border rounded-lg" />
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700">Bank IFSC Code</label>
+          <input type="text" id="profBankIfsc" class="w-full mt-1 p-2 border rounded-lg uppercase" />
+        </div>
+        <button type="submit" id="saveProfBtn" class="w-full bg-indigo-600 text-white font-semibold py-2.5 rounded-lg mt-3 text-sm">
+          Save Details
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Claim Modal -->
+  <div id="claimModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-bold text-slate-900">Withdraw Referral Balance</h3>
+        <button onclick="closeClaimModal()" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form onsubmit="handleClaimSubmit(event)" class="space-y-4 text-xs">
+        <div>
+          <label class="font-semibold text-slate-700">Amount (₹)</label>
+          <input type="number" id="claimAmountInput" class="w-full mt-1 p-2 border rounded-lg text-lg font-bold text-emerald-600" required />
+          <p class="text-[11px] text-slate-400 mt-1">Available: ₹<span id="claimAvailLabel">0</span></p>
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700">Payout Method</label>
+          <select id="claimMethodSelect" class="w-full mt-1 p-2 border rounded-lg bg-white" required>
+            <option value="UPI">UPI ID</option>
+            <option value="PhonePe">PhonePe</option>
+            <option value="Bank">Bank Account</option>
+          </select>
+        </div>
+        <button type="submit" id="submitClaimBtn" class="w-full bg-emerald-600 text-white font-semibold py-2.5 rounded-lg text-sm">
+          Submit Claim
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let activePhone = "";
+    let activePassword = "";
+    let studentData = null;
+
+    function showAlert(msg) {
+      const el = document.getElementById("authAlert");
+      el.innerText = msg;
+      el.classList.remove("hidden");
+    }
+
+    function hideAlert() {
+      document.getElementById("authAlert").classList.add("hidden");
+    }
+
+    async function handlePhoneSubmit(e) {
+      e.preventDefault();
+      hideAlert();
+      const phone = document.getElementById("inputPhone").value.trim();
+      const btn = document.getElementById("phoneContinueBtn");
+
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Checking...`;
+
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=checkUser&phone=${phone}`);
+        const data = await res.json();
+
+        if (data.status === "success") {
+          activePhone = phone;
+          document.getElementById("phoneStep").classList.add("hidden");
+          if (data.hasPassword) {
+            document.getElementById("loginPassStep").classList.remove("hidden");
+          } else {
+            document.getElementById("createPassStep").classList.remove("hidden");
+          }
+        } else {
+          showAlert(data.message || "Number registered nahi hai.");
+        }
+      } catch (err) {
+        showAlert("Server connection failed.");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `Continue <i class="fa-solid fa-arrow-right ml-1"></i>`;
+      }
+    }
+
+    function resetToPhoneStep() {
+      document.getElementById("loginPassStep").classList.add("hidden");
+      document.getElementById("createPassStep").classList.add("hidden");
+      document.getElementById("phoneStep").classList.remove("hidden");
+      hideAlert();
+    }
+
+    async function handlePasswordLogin(e) {
+      e.preventDefault();
+      hideAlert();
+      const pass = document.getElementById("loginPassword").value.trim();
+      const btn = document.getElementById("loginSubmitBtn");
+
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Verifying...`;
+
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=loginStudent&phone=${activePhone}&password=${encodeURIComponent(pass)}`);
+        const data = await res.json();
+
+        if (data.status === "success") {
+          activePassword = pass;
+          studentData = data;
+          localStorage.setItem("session_phone", activePhone);
+          localStorage.setItem("session_pass", activePassword);
+          renderDashboard();
+        } else {
+          showAlert(data.message || "Invalid Password.");
+        }
+      } catch (err) {
+        showAlert("Connection error.");
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Sign In to Dashboard";
+      }
+    }
+
+    async function handleCreatePassword(e) {
+      e.preventDefault();
+      hideAlert();
+      const p1 = document.getElementById("newPassword").value.trim();
+      const p2 = document.getElementById("confirmPassword").value.trim();
+
+      if (p1 !== p2) {
+        showAlert("Passwords match nahi kar rahe.");
+        return;
+      }
+
+      const btn = document.getElementById("createPassBtn");
+      btn.disabled = true;
+      btn.innerText = "Creating...";
+
+      await fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({
+          action: "setPassword",
+          phone: activePhone,
+          password: p1
+        })
+      });
+
+      alert("Password ban gaya! Ab login kijiye.");
+      document.getElementById("createPassStep").classList.add("hidden");
+      document.getElementById("loginPassStep").classList.remove("hidden");
+      btn.disabled = false;
+      btn.innerText = "Save Password & Login";
+    }
+
+    function renderDashboard() {
+      document.getElementById("loginSection").classList.add("hidden");
+      document.getElementById("dashboardSection").classList.remove("hidden");
+
+      document.getElementById("navUserName").innerText = `${studentData.user.name || 'Student'} (${activePhone})`;
+      document.getElementById("statTotalReferrals").innerText = studentData.stats.totalReferrals;
+      document.getElementById("statTotalSales").innerText = studentData.stats.totalSalesCount;
+      document.getElementById("statTotalEarnings").innerText = `₹${studentData.stats.totalEarnings.toFixed(2)}`;
+      document.getElementById("statAvailableBalance").innerText = `₹${studentData.stats.availableBalance.toFixed(2)}`;
+
+      const grid = document.getElementById("coursesGrid");
+      grid.innerHTML = "";
+      const baseUrl = window.location.origin + window.location.pathname.replace("index.html", "");
+
+      studentData.courses.forEach(course => {
+        const comm = studentData.user.customCommission !== null ? studentData.user.customCommission : course.defaultCommission;
+        const refLink = `${baseUrl}redirect.html?courseId=${course.courseId}&ref=${activePhone}`;
+        const waText = encodeURIComponent(`Explore this course: ${refLink}`);
+
+        const card = document.createElement("div");
+        card.className = "bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col justify-between";
+        card.innerHTML = `
+          <div>
+            <div class="h-36 bg-slate-100 flex items-center justify-center overflow-hidden">
+              ${course.imageUrl 
+                ? `<img src="${course.imageUrl}" class="w-full h-full object-cover">`
+                : `<i class="fa-solid fa-book-open text-3xl text-slate-300"></i>`}
+            </div>
+            <div class="p-4">
+              <div class="flex justify-between items-start mb-2">
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-600">ID: ${course.courseId}</span>
+                <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">${comm}% Commission</span>
+              </div>
+              <h3 class="font-bold text-sm text-slate-900">${course.title}</h3>
+            </div>
+          </div>
+          <div class="p-3 border-t bg-slate-50 flex gap-2">
+            <button onclick="copyLink('${refLink}')" class="flex-1 bg-white border hover:bg-slate-100 text-slate-700 py-1.5 rounded-lg text-xs font-semibold">
+              <i class="fa-solid fa-copy mr-1"></i> Copy Link
+            </button>
+            <a href="https://api.whatsapp.com/send?text=${waText}" target="_blank" class="bg-emerald-500 hover:bg-emerald-600 text-white p-2 rounded-lg text-xs">
+              <i class="fa-brands fa-whatsapp text-sm"></i>
+            </a>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      const sBody = document.getElementById("salesTableBody");
+      sBody.innerHTML = studentData.sales.length ? "" : `<tr><td colspan="3" class="py-4 text-center text-slate-400">No successful sales yet.</td></tr>`;
+      studentData.sales.forEach(s => {
+        sBody.innerHTML += `
+          <tr>
+            <td class="py-2.5 px-2 font-medium">${s.courseName || s.courseId}</td>
+            <td class="py-2.5 px-2 text-slate-500">${s.buyerPhone}</td>
+            <td class="py-2.5 px-2 font-bold text-emerald-600">₹${s.earning.toFixed(2)}</td>
+          </tr>
+        `;
+      });
+
+      const cBody = document.getElementById("claimsTableBody");
+      cBody.innerHTML = studentData.claims.length ? "" : `<tr><td colspan="4" class="py-4 text-center text-slate-400">No payout claims yet.</td></tr>`;
+      studentData.claims.forEach(c => {
+        const isPaid = c.status === "Paid" || c.status === "Approved";
+        const color = isPaid ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700";
+        cBody.innerHTML += `
+          <tr>
+            <td class="py-2.5 px-2 font-mono font-medium">${c.claimId}</td>
+            <td class="py-2.5 px-2 font-bold">₹${c.amount}</td>
+            <td class="py-2.5 px-2"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${color}">${c.status}</span></td>
+            <td class="py-2.5 px-2 font-mono text-[11px] text-slate-600">${c.txRef || (isPaid ? 'Credited' : 'Processing')}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function copyLink(link) {
+      navigator.clipboard.writeText(link);
+      alert("Referral Link Copied!");
+    }
+
+    function openProfileModal() {
+      const u = studentData.user;
+      document.getElementById("profName").value = u.name || "";
+      document.getElementById("profUpi").value = u.upiId || "";
+      document.getElementById("profPhonePe").value = u.phonePe || "";
+      document.getElementById("profBankAcc").value = u.bankAccount || "";
+      document.getElementById("profBankIfsc").value = u.bankIfsc || "";
+      document.getElementById("profileModal").classList.remove("hidden");
+      document.getElementById("profileModal").classList.add("flex");
+    }
+
+    function closeProfileModal() {
+      document.getElementById("profileModal").classList.add("hidden");
+      document.getElementById("profileModal").classList.remove("flex");
+    }
+
+    async function handleProfileSubmit(e) {
+      e.preventDefault();
+      const payload = {
+        action: "saveProfile",
+        phone: activePhone,
+        name: document.getElementById("profName").value.trim(),
+        upiId: document.getElementById("profUpi").value.trim(),
+        phonePe: document.getElementById("profPhonePe").value.trim(),
+        bankAccount: document.getElementById("profBankAcc").value.trim(),
+        bankIfsc: document.getElementById("profBankIfsc").value.trim()
+      };
+
+      const btn = document.getElementById("saveProfBtn");
+      btn.innerText = "Saving...";
+      btn.disabled = true;
+
+      await fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify(payload)
+      });
+
+      alert("Payout details successfully saved!");
+      closeProfileModal();
+      location.reload();
+    }
+
+    function openClaimModal() {
+      const avail = studentData.stats.availableBalance;
+      if (avail <= 0) {
+        alert("Zero claimable balance available.");
+        return;
+      }
+      document.getElementById("claimAvailLabel").innerText = avail.toFixed(2);
+      document.getElementById("claimAmountInput").value = avail;
+      document.getElementById("claimAmountInput").max = avail;
+      document.getElementById("claimModal").classList.remove("hidden");
+      document.getElementById("claimModal").classList.add("flex");
+    }
+
+    function closeClaimModal() {
+      document.getElementById("claimModal").classList.add("hidden");
+      document.getElementById("claimModal").classList.remove("flex");
+    }
+
+    async function handleClaimSubmit(e) {
+      e.preventDefault();
+      const amt = parseFloat(document.getElementById("claimAmountInput").value);
+      const method = document.getElementById("claimMethodSelect").value;
+      const u = studentData.user;
+
+      let details = "";
+      if (method === "UPI") details = u.upiId || prompt("Enter UPI ID:");
+      if (method === "PhonePe") details = u.phonePe || prompt("Enter PhonePe Number:");
+      if (method === "Bank") details = `${u.bankAccount} (${u.bankIfsc})`;
+
+      if (!details) {
+        alert("Payment details required.");
+        return;
+      }
+
+      const btn = document.getElementById("submitClaimBtn");
+      btn.innerText = "Submitting...";
+      btn.disabled = true;
+
+      await fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({
+          action: "claimPayout",
+          phone: activePhone,
+          amount: amt,
+          method: method,
+          details: details
+        })
+      });
+
+      alert("Payout request submitted!");
+      closeClaimModal();
+      location.reload();
+    }
+
+    function handleLogout() {
+      localStorage.removeItem("session_phone");
+      localStorage.removeItem("session_pass");
+      location.reload();
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const p = localStorage.getItem("session_phone");
+      const pass = localStorage.getItem("session_pass");
+      if (p && pass) {
+        activePhone = p;
+        document.getElementById("inputPhone").value = p;
+        document.getElementById("loginPassword").value = pass;
+        document.getElementById("phoneStep").classList.add("hidden");
+        document.getElementById("loginPassStep").classList.remove("hidden");
+        document.getElementById("loginSubmitBtn").click();
+      }
+    });
+  </script>
+</body>
+</html>

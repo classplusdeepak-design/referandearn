@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin - Program Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen">
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAKUIZI7zy6Cypfb9D4VgRyONyQmxUPh_0n9THdfJ96lpZDnrDX3Qv7rUEUTuHW8XX/exec";
+  </script>
+
+  <!-- Login Section -->
+  <div id="adminLoginSection" class="min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full border border-slate-200">
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 bg-slate-900 text-white rounded-xl flex items-center justify-center mx-auto mb-3 text-xl">
+          <i class="fa-solid fa-user-shield"></i>
+        </div>
+        <h1 class="text-xl font-bold text-slate-900">Admin Control Portal</h1>
+      </div>
+      <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Admin Password</label>
+          <input type="password" id="adminPass" required placeholder="Enter password"
+            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-sm" />
+        </div>
+        <button type="submit" id="adminLoginBtn" class="w-full bg-slate-900 text-white font-semibold py-2 rounded-lg text-sm hover:bg-slate-800">
+          Unlock Dashboard
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Admin Main Dashboard -->
+  <div id="adminMainSection" class="hidden min-h-screen flex flex-col">
+    <header class="bg-slate-900 text-white sticky top-0 z-30">
+      <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+        <span class="font-bold text-sm tracking-wide"><i class="fa-solid fa-chart-line mr-2"></i>Referral Management Engine</span>
+        <button onclick="location.reload()" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg">Logout</button>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+      
+      <!-- Top Action Bar -->
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Program Live Overview</h2>
+          <p class="text-xs text-slate-500">Real-time status of student logins, referrals, and payouts.</p>
+        </div>
+        <button onclick="openAddCourseModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3.5 py-2 rounded-lg shadow">
+          <i class="fa-solid fa-plus mr-1"></i> Add New Course Link
+        </button>
+      </div>
+
+      <!-- Pending Claims Section -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+        <h3 class="font-bold text-sm text-slate-900 mb-3"><i class="fa-solid fa-money-check-dollar mr-2 text-emerald-600"></i>Pending Payout Claims</h3>
+        <div class="overflow-x-auto text-xs">
+          <table class="w-full text-left">
+            <thead class="bg-slate-50 text-slate-500 border-b">
+              <tr>
+                <th class="py-2 px-2">Claim ID</th>
+                <th class="py-2 px-2">Student</th>
+                <th class="py-2 px-2">Amount</th>
+                <th class="py-2 px-2">Transfer Details</th>
+                <th class="py-2 px-2">Date</th>
+                <th class="py-2 px-2">Status</th>
+                <th class="py-2 px-2">Action</th>
+              </tr>
+            </thead>
+            <tbody id="adminClaimsTable" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Registered Students & Activity Log -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+        <h3 class="font-bold text-sm text-slate-900 mb-3"><i class="fa-solid fa-users mr-2 text-indigo-600"></i>Student Referrers Directory & Performance</h3>
+        <div class="overflow-x-auto text-xs">
+          <table class="w-full text-left">
+            <thead class="bg-slate-50 text-slate-500 border-b">
+              <tr>
+                <th class="py-2 px-2">Student</th>
+                <th class="py-2 px-2">Last Login</th>
+                <th class="py-2 px-2">Leads Referred</th>
+                <th class="py-2 px-2">Sales Converted</th>
+                <th class="py-2 px-2">Commission Earned</th>
+                <th class="py-2 px-2">Available Balance</th>
+                <th class="py-2 px-2">Commission %</th>
+                <th class="py-2 px-2">Action</th>
+              </tr>
+            </thead>
+            <tbody id="adminStudentsTable" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Courses Directory -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+        <h3 class="font-bold text-sm text-slate-900 mb-3"><i class="fa-solid fa-book mr-2 text-amber-600"></i>Active Courses</h3>
+        <div class="overflow-x-auto text-xs">
+          <table class="w-full text-left">
+            <thead class="bg-slate-50 text-slate-500 border-b">
+              <tr>
+                <th class="py-2 px-2">Course ID</th>
+                <th class="py-2 px-2">Title</th>
+                <th class="py-2 px-2">Store Link</th>
+                <th class="py-2 px-2">Default Commission</th>
+              </tr>
+            </thead>
+            <tbody id="adminCoursesTable" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Modal: Add New Course -->
+  <div id="addCourseModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-bold text-slate-900 text-sm">Add New Course to Referral Program</h3>
+        <button onclick="closeAddCourseModal()" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form onsubmit="handleAddCourseSubmit(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="font-semibold text-slate-700">Course Store URL</label>
+          <input type="url" id="newCourseUrl" placeholder="https://obqype.courses.store/843481" class="w-full mt-1 p-2 border rounded-lg" required onchange="extractCourseId(this.value)" />
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700">Course ID</label>
+          <input type="text" id="newCourseId" placeholder="843481" class="w-full mt-1 p-2 border rounded-lg font-mono font-bold" required />
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700">Course Title</label>
+          <input type="text" id="newCourseTitle" placeholder="Course Name" class="w-full mt-1 p-2 border rounded-lg" required />
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700">Image URL</label>
+          <input type="url" id="newCourseImg" placeholder="https://..." class="w-full mt-1 p-2 border rounded-lg" />
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700">Default Commission %</label>
+          <input type="number" id="newCourseComm" value="10" min="1" max="100" class="w-full mt-1 p-2 border rounded-lg font-bold" required />
+        </div>
+        <button type="submit" id="saveCourseBtn" class="w-full bg-slate-900 text-white font-semibold py-2.5 rounded-lg text-sm mt-3">
+          Save Course
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let adminToken = "";
+
+    function extractCourseId(url) {
+      const match = url.match(/\/(\d+)(\/|\?|$)/);
+      if (match && match[1]) {
+        document.getElementById("newCourseId").value = match[1];
+      }
+    }
+
+    async function handleAdminLogin(e) {
+      e.preventDefault();
+      const pass = document.getElementById("adminPass").value;
+      const btn = document.getElementById("adminLoginBtn");
+      btn.innerText = "Verifying...";
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=getAdminData&password=${encodeURIComponent(pass)}`);
+        const data = await res.json();
+
+        if (data.status === "success") {
+          adminToken = pass;
+          document.getElementById("adminLoginSection").classList.add("hidden");
+          document.getElementById("adminMainSection").classList.remove("hidden");
+          renderAdminData(data);
+        } else {
+          alert("Incorrect Password.");
+        }
+      } catch (err) {
+        alert("Server connection failed.");
+      } finally {
+        btn.innerText = "Unlock Dashboard";
+        btn.disabled = false;
+      }
+    }
+
+    function renderAdminData(data) {
+      // Courses
+      const cTable = document.getElementById("adminCoursesTable");
+      cTable.innerHTML = "";
+      data.courses.forEach(c => {
+        cTable.innerHTML += `
+          <tr>
+            <td class="py-2.5 px-2 font-mono font-bold">${c.courseId}</td>
+            <td class="py-2.5 px-2 font-medium">${c.title}</td>
+            <td class="py-2.5 px-2"><a href="${c.storeUrl}" target="_blank" class="text-indigo-600 truncate max-w-xs block">${c.storeUrl}</a></td>
+            <td class="py-2.5 px-2 font-bold">${c.defaultCommission}%</td>
+          </tr>
+        `;
+      });
+
+      // Claims
+      const clTable = document.getElementById("adminClaimsTable");
+      clTable.innerHTML = data.claims.length ? "" : `<tr><td colspan="7" class="py-4 text-center text-slate-400">No payout claims recorded.</td></tr>`;
+      data.claims.forEach(cl => {
+        const [claimId, phone, amount, method, details, date, status, txRef] = cl;
+        clTable.innerHTML += `
+          <tr>
+            <td class="py-2.5 px-2 font-mono font-bold">${claimId}</td>
+            <td class="py-2.5 px-2">${phone}</td>
+            <td class="py-2.5 px-2 font-bold text-emerald-600">₹${amount}</td>
+            <td class="py-2.5 px-2">${method}: ${details}</td>
+            <td class="py-2.5 px-2 text-slate-500">${new Date(date).toLocaleDateString()}</td>
+            <td class="py-2.5 px-2"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${status === 'Paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${status}</span></td>
+            <td class="py-2.5 px-2">
+              ${status === 'Pending' ? `
+                <button onclick="markClaimPaid('${claimId}')" class="bg-emerald-600 text-white px-2.5 py-1 rounded text-[11px] font-semibold hover:bg-emerald-700">Mark Paid</button>
+              ` : `<span class="text-slate-400 font-mono text-[11px]">UTR: ${txRef || 'Done'}</span>`}
+            </td>
+          </tr>
+        `;
+      });
+
+      // Students
+      const sTable = document.getElementById("adminStudentsTable");
+      sTable.innerHTML = data.students.length ? "" : `<tr><td colspan="8" class="py-4 text-center text-slate-400">No students registered yet.</td></tr>`;
+      data.students.forEach(s => {
+        sTable.innerHTML += `
+          <tr>
+            <td class="py-2.5 px-2">
+              <span class="font-bold text-slate-900 block">${s.name}</span>
+              <span class="text-slate-500 font-mono text-[11px]">${s.phone}</span>
+            </td>
+            <td class="py-2.5 px-2 text-slate-500">${s.lastLogin !== 'Never' ? new Date(s.lastLogin).toLocaleString() : 'Never'}</td>
+            <td class="py-2.5 px-2 font-bold">${s.totalLeads}</td>
+            <td class="py-2.5 px-2 font-bold text-indigo-600">${s.conversions}</td>
+            <td class="py-2.5 px-2 font-bold text-slate-900">₹${s.totalEarned.toFixed(2)}</td>
+            <td class="py-2.5 px-2 font-bold text-emerald-600">₹${s.availableBalance.toFixed(2)}</td>
+            <td class="py-2.5 px-2 font-bold text-indigo-600">${s.customCommission !== null ? s.customCommission + '%' : 'Default'}</td>
+            <td class="py-2.5 px-2">
+              <button onclick="setCustomCommission('${s.phone}', '${s.customCommission || ''}')" class="text-indigo-600 hover:underline font-semibold">Assign %</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function openAddCourseModal() {
+      document.getElementById("addCourseModal").classList.remove("hidden");
+      document.getElementById("addCourseModal").classList.add("flex");
+    }
+
+    function closeAddCourseModal() {
+      document.getElementById("addCourseModal").classList.add("hidden");
+      document.getElementById("addCourseModal").classList.remove("flex");
+    }
+
+    async function handleAddCourseSubmit(e) {
+      e.preventDefault();
+      const payload = {
+        action: "adminAddCourse",
+        courseId: document.getElementById("newCourseId").value.trim(),
+        title: document.getElementById("newCourseTitle").value.trim(),
+        imageUrl: document.getElementById("newCourseImg").value.trim(),
+        storeUrl: document.getElementById("newCourseUrl").value.trim(),
+        commission: parseFloat(document.getElementById("newCourseComm").value)
+      };
+
+      const btn = document.getElementById("saveCourseBtn");
+      btn.innerText = "Adding...";
+      btn.disabled = true;
+
+      await fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify(payload)
+      });
+
+      alert("Course added successfully!");
+      closeAddCourseModal();
+      location.reload();
+    }
+
+    async function setCustomCommission(phone, current) {
+      const rate = prompt(`Assign specific commission % for ${phone}:`, current || 15);
+      if (rate !== null && !isNaN(rate)) {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          body: JSON.stringify({
+            action: "adminSetCommission",
+            phone: phone,
+            commissionRate: parseFloat(rate)
+          })
+        });
+        alert("Custom commission assigned successfully!");
+        location.reload();
+      }
+    }
+
+    async function markClaimPaid(claimId) {
+      const ref = prompt("Enter Bank UTR / Transaction Reference ID:");
+      if (ref !== null) {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          body: JSON.stringify({
+            action: "adminUpdateClaim",
+            claimId: claimId,
+            status: "Paid",
+            txRef: ref
+          })
+        });
+        alert("Marked as Paid. Student dashboard updated!");
+        location.reload();
+      }
+    }
+  </script>
+</body>
+</html>
