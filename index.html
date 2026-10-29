@@ -11,95 +11,145 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAKUIZI7zy6Cypfb9D4VgRyONyQmxUPh_0n9THdfJ96lpZDnrDX3Qv7rUEUTuHW8XX/exec";
+
+    // 1. AUTO-REDIRECT BUYER (Zero dependency on redirect.html)
+    const params = new URLSearchParams(window.location.search);
+    const courseId = params.get("courseId");
+    const referrerPhone = params.get("ref");
+
+    if (courseId && referrerPhone) {
+      document.body.innerHTML = `
+        <div class="min-h-screen flex items-center justify-center bg-slate-50">
+          <div class="text-center p-8 bg-white rounded-2xl shadow-xl max-w-sm w-full mx-4 border border-slate-100">
+            <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 text-xl">
+              <i class="fa-solid fa-spinner fa-spin"></i>
+            </div>
+            <h2 class="text-lg font-bold text-slate-900 mb-1">Redirecting to Course...</h2>
+            <p class="text-xs text-slate-500">Securing your referral link.</p>
+          </div>
+        </div>
+      `;
+      try {
+        fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          body: JSON.stringify({
+            action: "recordLead",
+            referrerPhone: referrerPhone,
+            buyerPhone: "Click_" + new Date().getTime(),
+            courseId: courseId
+          })
+        });
+      } catch (err) {}
+
+      setTimeout(() => {
+        window.location.replace(`https://obqype.courses.store/${courseId}`);
+      }, 550);
+    }
   </script>
 
-  <!-- Login / Setup Password Screen -->
+  <!-- Login Section -->
   <div id="loginSection" class="min-h-screen flex items-center justify-center p-4">
     <div class="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-slate-100">
       <div class="text-center mb-6">
-        <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl font-bold">
+        <div class="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl font-bold shadow-inner">
           <i class="fa-solid fa-graduation-cap"></i>
         </div>
-        <h1 class="text-2xl font-bold text-slate-900">Student Referral Hub</h1>
-        <p class="text-sm text-slate-500 mt-1">Apne registered mobile number se login karein</p>
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Refer & Earn Portal</h1>
+        <p class="text-xs text-slate-500 mt-1">Apne 10-digit mobile number se continue karein</p>
       </div>
 
-      <!-- Step 1: Enter Phone Number -->
+      <!-- Step 1: Mobile -->
       <div id="phoneStep">
         <form onsubmit="handlePhoneSubmit(event)" class="space-y-4">
           <div>
-            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Registered Mobile Number</label>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Mobile Number</label>
             <div class="relative">
               <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 font-medium">+91</span>
               <input type="tel" id="inputPhone" required maxlength="10" placeholder="9876543210"
-                class="w-full pl-12 pr-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 font-medium" />
+                class="w-full pl-12 pr-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 font-medium text-sm" />
             </div>
           </div>
-          <button type="submit" id="phoneContinueBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition-all shadow">
+          <button type="submit" id="phoneContinueBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition-all shadow text-sm">
             Continue <i class="fa-solid fa-arrow-right ml-1"></i>
           </button>
         </form>
       </div>
 
-      <!-- Step 2A: Enter Password (If already set) -->
+      <!-- Step 2A: Password Login -->
       <div id="loginPassStep" class="hidden">
         <form onsubmit="handlePasswordLogin(event)" class="space-y-4">
           <div>
             <div class="flex justify-between items-center mb-1">
               <label class="block text-xs font-semibold uppercase text-slate-500">Enter Password</label>
-              <button type="button" onclick="resetToPhoneStep()" class="text-xs text-indigo-600 font-medium">Change Number</button>
+              <button type="button" onclick="resetToPhoneStep()" class="text-xs text-indigo-600 font-medium hover:underline">Change Number</button>
             </div>
             <input type="password" id="loginPassword" required placeholder="••••••••"
-              class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 font-medium" />
+              class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 font-medium text-sm" />
           </div>
-          <button type="submit" id="loginSubmitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition-all shadow">
+          <button type="submit" id="loginSubmitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition-all shadow text-sm">
             Sign In to Dashboard
           </button>
         </form>
       </div>
 
-      <!-- Step 2B: Create Password (For First Time Login) -->
+      <!-- Step 2B: Setup Password & Name -->
       <div id="createPassStep" class="hidden">
-        <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 mb-4 font-medium">
-          Aapka pehli baar login hai. Aage ke liye apna secret password create karein.
+        <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 mb-4 font-medium leading-relaxed">
+          <i class="fa-solid fa-sparkles mr-1"></i> Apna account verify karein aur login password set karein.
         </div>
-        <form onsubmit="handleCreatePassword(event)" class="space-y-3">
-          <div>
-            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Create Password</label>
-            <input type="password" id="newPassword" required placeholder="Minimum 4 characters" minlength="4"
-              class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 font-medium" />
+        <form onsubmit="handleCreatePassword(event)" class="space-y-3 text-xs">
+          <div id="nameInputGroup" class="hidden">
+            <label class="block font-semibold uppercase text-slate-500 mb-1">Your Full Name</label>
+            <input type="text" id="newName" placeholder="Enter full name"
+              class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 font-medium text-sm" />
           </div>
           <div>
-            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Confirm Password</label>
+            <label class="block font-semibold uppercase text-slate-500 mb-1">Create Password</label>
+            <input type="password" id="newPassword" required placeholder="Min 4 characters" minlength="4"
+              class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 font-medium text-sm" />
+          </div>
+          <div>
+            <label class="block font-semibold uppercase text-slate-500 mb-1">Confirm Password</label>
             <input type="password" id="confirmPassword" required placeholder="Re-enter password" minlength="4"
-              class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 font-medium" />
+              class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 font-medium text-sm" />
           </div>
-          <button type="submit" id="createPassBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-lg transition-all shadow mt-2">
-            Save Password & Login
+          <button type="submit" id="createPassBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-lg transition-all shadow mt-2 text-sm">
+            Save & Enter Dashboard
           </button>
         </form>
       </div>
 
-      <div id="authAlert" class="mt-4 text-center text-xs font-medium text-rose-600 hidden"></div>
+      <div id="authAlert" class="mt-4 text-center text-xs font-semibold text-rose-600 hidden"></div>
     </div>
   </div>
 
   <!-- Dashboard Section -->
   <div id="dashboardSection" class="hidden min-h-screen flex flex-col">
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+    <!-- Top Announcement Banner -->
+    <div id="liveOfferBanner" class="hidden bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white text-xs font-bold py-2.5 px-4 text-center shadow-sm">
+      <span class="inline-block animate-pulse mr-1.5"><i class="fa-solid fa-fire"></i></span>
+      <span id="liveOfferText">Special Offer Active!</span>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
         <div class="flex items-center space-x-3">
-          <div class="bg-indigo-600 text-white p-2 rounded-lg"><i class="fa-solid fa-award"></i></div>
+          <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-xs"><i class="fa-solid fa-award"></i></div>
           <div>
-            <h1 class="font-bold text-slate-900 leading-none">Referral Hub</h1>
-            <span id="navUserName" class="text-xs text-slate-500 font-medium">Student</span>
+            <h1 class="font-extrabold text-slate-900 leading-none">Referral Hub</h1>
+            <div class="flex items-center gap-1.5 mt-0.5">
+              <span id="navUserName" class="text-xs text-slate-500 font-medium">Student</span>
+              <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="Live Auto-Sync Active"></span>
+            </div>
           </div>
         </div>
         <div class="flex items-center space-x-3">
-          <button onclick="openProfileModal()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">
-            <i class="fa-solid fa-wallet mr-1"></i> Bank/UPI Details
+          <button onclick="openProfileModal()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+            <i class="fa-solid fa-wallet mr-1 text-slate-500"></i> Payout Details
           </button>
-          <button onclick="handleLogout()" class="text-slate-400 hover:text-slate-600 text-sm">
+          <button onclick="handleLogout()" class="text-slate-400 hover:text-rose-600 text-sm transition" title="Logout">
             <i class="fa-solid fa-arrow-right-from-bracket"></i>
           </button>
         </div>
@@ -108,28 +158,28 @@
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
       
-      <!-- Metrics Overview -->
+      <!-- Metrics Overview Cards -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <p class="text-xs text-slate-500 font-medium">Total Clicks/Leads</p>
-          <p id="statTotalReferrals" class="text-2xl font-bold text-slate-900 mt-1">0</p>
+          <p id="statTotalReferrals" class="text-2xl font-black text-slate-900 mt-1">0</p>
         </div>
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <p class="text-xs text-slate-500 font-medium">Sales Converted</p>
-          <p id="statTotalSales" class="text-2xl font-bold text-slate-900 mt-1">0</p>
+          <p id="statTotalSales" class="text-2xl font-black text-slate-900 mt-1">0</p>
         </div>
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <p class="text-xs text-slate-500 font-medium">Total Earned</p>
-          <p id="statTotalEarnings" class="text-2xl font-bold text-indigo-600 mt-1">₹0</p>
+          <p id="statTotalEarnings" class="text-2xl font-black text-indigo-600 mt-1">₹0</p>
         </div>
         <div class="bg-white p-4 rounded-xl border border-emerald-200 shadow-sm bg-emerald-50/40">
           <div class="flex justify-between items-start">
             <div>
               <p class="text-xs text-emerald-800 font-medium">Claimable Balance</p>
-              <p id="statAvailableBalance" class="text-2xl font-bold text-emerald-600 mt-1">₹0</p>
+              <p id="statAvailableBalance" class="text-2xl font-black text-emerald-600 mt-1">₹0</p>
             </div>
-            <button onclick="openClaimModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow">
-              Claim Now
+            <button onclick="openClaimModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">
+              Claim
             </button>
           </div>
         </div>
@@ -139,22 +189,23 @@
       <div class="space-y-4">
         <div class="flex justify-between items-center">
           <h2 class="text-lg font-bold text-slate-900">Your Referral Courses</h2>
-          <span class="text-xs text-slate-500 bg-slate-200 px-2 py-0.5 rounded">Share & Earn</span>
+          <span class="text-xs text-slate-500 bg-slate-200 px-2 py-0.5 rounded font-medium">Share & Earn</span>
         </div>
         <div id="coursesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
       </div>
 
       <!-- Tables -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
+        <!-- Sales Attribution Log -->
         <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-          <h3 class="font-bold text-sm text-slate-900 mb-3"><i class="fa-solid fa-receipt text-indigo-500 mr-2"></i>Sales Commission Log</h3>
+          <h3 class="font-bold text-sm text-slate-900 mb-3"><i class="fa-solid fa-receipt text-indigo-500 mr-2"></i>Sales Attribution Log</h3>
           <div class="overflow-x-auto max-h-60 overflow-y-auto text-xs">
             <table class="w-full text-left">
               <thead class="bg-slate-50 text-slate-500 border-b">
                 <tr>
-                  <th class="py-2 px-2">Course</th>
-                  <th class="py-2 px-2">Buyer</th>
-                  <th class="py-2 px-2">Commission</th>
+                  <th class="py-2 px-2">Course & Date</th>
+                  <th class="py-2 px-2">Buyer Detail</th>
+                  <th class="py-2 px-2">Commission Earned</th>
                 </tr>
               </thead>
               <tbody id="salesTableBody" class="divide-y divide-slate-100"></tbody>
@@ -162,8 +213,9 @@
           </div>
         </div>
 
+        <!-- Payout Requests -->
         <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-          <h3 class="font-bold text-sm text-slate-900 mb-3"><i class="fa-solid fa-building-columns text-emerald-500 mr-2"></i>Payout Status</h3>
+          <h3 class="font-bold text-sm text-slate-900 mb-3"><i class="fa-solid fa-building-columns text-emerald-500 mr-2"></i>Payout Requests</h3>
           <div class="overflow-x-auto max-h-60 overflow-y-auto text-xs">
             <table class="w-full text-left">
               <thead class="bg-slate-50 text-slate-500 border-b">
@@ -171,7 +223,7 @@
                   <th class="py-2 px-2">Claim ID</th>
                   <th class="py-2 px-2">Amount</th>
                   <th class="py-2 px-2">Status</th>
-                  <th class="py-2 px-2">UTR/Ref</th>
+                  <th class="py-2 px-2">Ref / UTR</th>
                 </tr>
               </thead>
               <tbody id="claimsTableBody" class="divide-y divide-slate-100"></tbody>
@@ -196,7 +248,7 @@
           <input type="text" id="profName" class="w-full mt-1 p-2 border rounded-lg" required />
         </div>
         <div>
-          <label class="font-semibold text-slate-700">UPI ID (GPay / Paytm / BHIM)</label>
+          <label class="font-semibold text-slate-700">UPI ID</label>
           <input type="text" id="profUpi" placeholder="username@okhdfcbank" class="w-full mt-1 p-2 border rounded-lg" />
         </div>
         <div>
@@ -218,7 +270,7 @@
     </div>
   </div>
 
-  <!-- Claim Modal -->
+  <!-- Claim Modal (Strict Validation) -->
   <div id="claimModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl">
       <div class="flex justify-between items-center mb-4">
@@ -227,9 +279,14 @@
       </div>
       <form onsubmit="handleClaimSubmit(event)" class="space-y-4 text-xs">
         <div>
-          <label class="font-semibold text-slate-700">Amount (₹)</label>
-          <input type="number" id="claimAmountInput" class="w-full mt-1 p-2 border rounded-lg text-lg font-bold text-emerald-600" required />
-          <p class="text-[11px] text-slate-400 mt-1">Available: ₹<span id="claimAvailLabel">0</span></p>
+          <div class="flex justify-between items-center">
+            <label class="font-semibold text-slate-700">Claim Amount (₹)</label>
+            <span class="text-[11px] text-slate-500 font-bold">Available: ₹<span id="claimAvailLabel">0.00</span></span>
+          </div>
+          <input type="number" id="claimAmountInput" min="0" step="any" class="w-full mt-1 p-2 border rounded-lg text-lg font-bold text-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500" required />
+          <p id="claimLimitWarning" class="text-[11px] text-amber-600 mt-1 hidden font-medium">
+            <i class="fa-solid fa-circle-exclamation mr-1"></i> Amount available balance se zyada nahi ho sakta.
+          </p>
         </div>
         <div>
           <label class="font-semibold text-slate-700">Payout Method</label>
@@ -239,7 +296,7 @@
             <option value="Bank">Bank Account</option>
           </select>
         </div>
-        <button type="submit" id="submitClaimBtn" class="w-full bg-emerald-600 text-white font-semibold py-2.5 rounded-lg text-sm">
+        <button type="submit" id="submitClaimBtn" class="w-full bg-emerald-600 text-white font-semibold py-2.5 rounded-lg text-sm shadow">
           Submit Claim
         </button>
       </form>
@@ -250,6 +307,9 @@
     let activePhone = "";
     let activePassword = "";
     let studentData = null;
+    let isBrandNewUser = false;
+    let isStudentSyncing = false;
+    let studentSyncInterval = null;
 
     function showAlert(msg) {
       const el = document.getElementById("authAlert");
@@ -277,13 +337,19 @@
         if (data.status === "success") {
           activePhone = phone;
           document.getElementById("phoneStep").classList.add("hidden");
-          if (data.hasPassword) {
+
+          if (data.exists && data.hasPassword) {
             document.getElementById("loginPassStep").classList.remove("hidden");
           } else {
             document.getElementById("createPassStep").classList.remove("hidden");
+            if (!data.exists) {
+              isBrandNewUser = true;
+              document.getElementById("nameInputGroup").classList.remove("hidden");
+              document.getElementById("newName").required = true;
+            }
           }
         } else {
-          showAlert(data.message || "Number registered nahi hai.");
+          showAlert(data.message || "Failed to verify phone.");
         }
       } catch (err) {
         showAlert("Server connection failed.");
@@ -301,13 +367,15 @@
     }
 
     async function handlePasswordLogin(e) {
-      e.preventDefault();
+      if (e) e.preventDefault();
       hideAlert();
-      const pass = document.getElementById("loginPassword").value.trim();
+      const pass = document.getElementById("loginPassword").value.trim() || activePassword;
       const btn = document.getElementById("loginSubmitBtn");
 
-      btn.disabled = true;
-      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Verifying...`;
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Verifying...`;
+      }
 
       try {
         const res = await fetch(`${SCRIPT_URL}?action=loginStudent&phone=${activePhone}&password=${encodeURIComponent(pass)}`);
@@ -316,17 +384,25 @@
         if (data.status === "success") {
           activePassword = pass;
           studentData = data;
-          localStorage.setItem("session_phone", activePhone);
-          localStorage.setItem("session_pass", activePassword);
+
+          // Save persistent login in localStorage
+          localStorage.setItem("student_auth_phone", activePhone);
+          localStorage.setItem("student_auth_pass", activePassword);
+
           renderDashboard();
+          startStudentRealtimeSync();
         } else {
           showAlert(data.message || "Invalid Password.");
+          localStorage.removeItem("student_auth_phone");
+          localStorage.removeItem("student_auth_pass");
         }
       } catch (err) {
         showAlert("Connection error.");
       } finally {
-        btn.disabled = false;
-        btn.innerText = "Sign In to Dashboard";
+        if (btn) {
+          btn.disabled = false;
+          btn.innerText = "Sign In to Dashboard";
+        }
       }
     }
 
@@ -335,6 +411,7 @@
       hideAlert();
       const p1 = document.getElementById("newPassword").value.trim();
       const p2 = document.getElementById("confirmPassword").value.trim();
+      const customName = document.getElementById("newName").value.trim();
 
       if (p1 !== p2) {
         showAlert("Passwords match nahi kar rahe.");
@@ -343,7 +420,7 @@
 
       const btn = document.getElementById("createPassBtn");
       btn.disabled = true;
-      btn.innerText = "Creating...";
+      btn.innerText = "Registering...";
 
       await fetch(SCRIPT_URL, {
         method: "POST",
@@ -351,20 +428,52 @@
         body: JSON.stringify({
           action: "setPassword",
           phone: activePhone,
-          password: p1
+          password: p1,
+          name: customName
         })
       });
 
-      alert("Password ban gaya! Ab login kijiye.");
+      alert("Account & Password successfully set! Ab login karein.");
       document.getElementById("createPassStep").classList.add("hidden");
       document.getElementById("loginPassStep").classList.remove("hidden");
       btn.disabled = false;
-      btn.innerText = "Save Password & Login";
+      btn.innerText = "Save & Enter Dashboard";
+    }
+
+    // Every 2.5 seconds real-time auto-sync for student portal
+    function startStudentRealtimeSync() {
+      if (studentSyncInterval) clearInterval(studentSyncInterval);
+      studentSyncInterval = setInterval(async () => {
+        if (!activePhone || !activePassword || isStudentSyncing) return;
+        isStudentSyncing = true;
+        try {
+          const res = await fetch(`${SCRIPT_URL}?action=loginStudent&phone=${activePhone}&password=${encodeURIComponent(activePassword)}`);
+          const data = await res.json();
+          if (data && data.status === "success") {
+            studentData = data;
+            renderDashboard();
+          }
+        } catch (e) {
+          console.warn("Student auto-sync retry", e);
+        } finally {
+          isStudentSyncing = false;
+        }
+      }, 2500);
     }
 
     function renderDashboard() {
       document.getElementById("loginSection").classList.add("hidden");
       document.getElementById("dashboardSection").classList.remove("hidden");
+
+      if (studentData.offer && studentData.offer.text) {
+        const commMsg = studentData.offer.commissionPercent 
+          ? ` (Special ${studentData.offer.commissionPercent}% Bonus Active!)` 
+          : "";
+        document.getElementById("liveOfferText").innerText = studentData.offer.text + commMsg;
+        document.getElementById("liveOfferBanner").classList.remove("hidden");
+      } else {
+        document.getElementById("liveOfferBanner").classList.add("hidden");
+      }
 
       document.getElementById("navUserName").innerText = `${studentData.user.name || 'Student'} (${activePhone})`;
       document.getElementById("statTotalReferrals").innerText = studentData.stats.totalReferrals;
@@ -374,11 +483,14 @@
 
       const grid = document.getElementById("coursesGrid");
       grid.innerHTML = "";
-      const baseUrl = window.location.origin + window.location.pathname.replace("index.html", "");
+      const baseUrl = window.location.origin + window.location.pathname;
 
       studentData.courses.forEach(course => {
-        const comm = studentData.user.customCommission !== null ? studentData.user.customCommission : course.defaultCommission;
-        const refLink = `${baseUrl}redirect.html?courseId=${course.courseId}&ref=${activePhone}`;
+        const customComm = studentData.user.customCommission !== null ? studentData.user.customCommission : 0;
+        const liveCourseComm = course.defaultCommission || 10;
+        const bestRate = Math.max(customComm, liveCourseComm);
+
+        const refLink = `${baseUrl}?courseId=${course.courseId}&ref=${activePhone}`;
         const waText = encodeURIComponent(`Explore this course: ${refLink}`);
 
         const card = document.createElement("div");
@@ -393,7 +505,7 @@
             <div class="p-4">
               <div class="flex justify-between items-start mb-2">
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-600">ID: ${course.courseId}</span>
-                <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">${comm}% Commission</span>
+                <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">${bestRate}% Bonus</span>
               </div>
               <h3 class="font-bold text-sm text-slate-900">${course.title}</h3>
             </div>
@@ -402,7 +514,7 @@
             <button onclick="copyLink('${refLink}')" class="flex-1 bg-white border hover:bg-slate-100 text-slate-700 py-1.5 rounded-lg text-xs font-semibold">
               <i class="fa-solid fa-copy mr-1"></i> Copy Link
             </button>
-            <a href="https://api.whatsapp.com/send?text=${waText}" target="_blank" class="bg-emerald-500 hover:bg-emerald-600 text-white p-2 rounded-lg text-xs">
+            <a href="https://api.whatsapp.com/send?text=${waText}" target="_blank" class="bg-emerald-500 hover:bg-emerald-600 text-white p-2 rounded-lg text-xs flex items-center justify-center">
               <i class="fa-brands fa-whatsapp text-sm"></i>
             </a>
           </div>
@@ -415,9 +527,18 @@
       studentData.sales.forEach(s => {
         sBody.innerHTML += `
           <tr>
-            <td class="py-2.5 px-2 font-medium">${s.courseName || s.courseId}</td>
-            <td class="py-2.5 px-2 text-slate-500">${s.buyerPhone}</td>
-            <td class="py-2.5 px-2 font-bold text-emerald-600">₹${s.earning.toFixed(2)}</td>
+            <td class="py-2.5 px-2">
+              <span class="font-medium block text-slate-900">${s.courseName || s.courseId}</span>
+              <span class="text-[10px] text-slate-400 font-mono">${s.date ? new Date(s.date).toLocaleDateString() : ''}</span>
+            </td>
+            <td class="py-2.5 px-2">
+              <span class="font-semibold block text-slate-800">${s.buyerPhone}</span>
+              <span class="text-[10px] text-slate-500 font-bold">Paid: ₹${s.amountPaid}</span>
+            </td>
+            <td class="py-2.5 px-2 font-bold text-emerald-600">
+              ₹${s.earning.toFixed(2)}
+              <span class="block text-[10px] text-slate-400 font-normal">(${s.rate}%)</span>
+            </td>
           </tr>
         `;
       });
@@ -483,18 +604,41 @@
 
       alert("Payout details successfully saved!");
       closeProfileModal();
-      location.reload();
+      
+      const res = await fetch(`${SCRIPT_URL}?action=loginStudent&phone=${activePhone}&password=${encodeURIComponent(activePassword)}`);
+      studentData = await res.json();
+      renderDashboard();
     }
 
     function openClaimModal() {
-      const avail = studentData.stats.availableBalance;
-      if (avail <= 0) {
-        alert("Zero claimable balance available.");
-        return;
-      }
+      const avail = studentData.stats.availableBalance || 0;
       document.getElementById("claimAvailLabel").innerText = avail.toFixed(2);
-      document.getElementById("claimAmountInput").value = avail;
-      document.getElementById("claimAmountInput").max = avail;
+      
+      const input = document.getElementById("claimAmountInput");
+      input.value = avail;
+      input.max = avail;
+      input.min = 0;
+
+      input.oninput = function() {
+        const val = parseFloat(this.value);
+        const warning = document.getElementById("claimLimitWarning");
+        const submitBtn = document.getElementById("submitClaimBtn");
+
+        if (val > avail) {
+          warning.classList.remove("hidden");
+          submitBtn.disabled = true;
+          submitBtn.classList.add("opacity-50", "cursor-not-allowed");
+        } else {
+          warning.classList.add("hidden");
+          submitBtn.disabled = false;
+          submitBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        }
+      };
+
+      document.getElementById("claimLimitWarning").classList.add("hidden");
+      document.getElementById("submitClaimBtn").disabled = false;
+      document.getElementById("submitClaimBtn").classList.remove("opacity-50", "cursor-not-allowed");
+
       document.getElementById("claimModal").classList.remove("hidden");
       document.getElementById("claimModal").classList.add("flex");
     }
@@ -507,6 +651,18 @@
     async function handleClaimSubmit(e) {
       e.preventDefault();
       const amt = parseFloat(document.getElementById("claimAmountInput").value);
+      const avail = studentData.stats.availableBalance || 0;
+
+      if (isNaN(amt) || amt < 0) {
+        alert("Please enter a valid amount.");
+        return;
+      }
+
+      if (amt > avail) {
+        alert(`Aapke paas sirf ₹${avail.toFixed(2)} available hain. Aap isse zyada claim nahi kar sakte.`);
+        return;
+      }
+
       const method = document.getElementById("claimMethodSelect").value;
       const u = studentData.user;
 
@@ -538,25 +694,27 @@
 
       alert("Payout request submitted!");
       closeClaimModal();
-      location.reload();
+      
+      const refreshRes = await fetch(`${SCRIPT_URL}?action=loginStudent&phone=${activePhone}&password=${encodeURIComponent(activePassword)}`);
+      studentData = await refreshRes.json();
+      renderDashboard();
     }
 
     function handleLogout() {
-      localStorage.removeItem("session_phone");
-      localStorage.removeItem("session_pass");
+      localStorage.removeItem("student_auth_phone");
+      localStorage.removeItem("student_auth_pass");
+      if (studentSyncInterval) clearInterval(studentSyncInterval);
       location.reload();
     }
 
+    // Auto-restore student session on page load/refresh
     window.addEventListener("DOMContentLoaded", () => {
-      const p = localStorage.getItem("session_phone");
-      const pass = localStorage.getItem("session_pass");
-      if (p && pass) {
-        activePhone = p;
-        document.getElementById("inputPhone").value = p;
-        document.getElementById("loginPassword").value = pass;
-        document.getElementById("phoneStep").classList.add("hidden");
-        document.getElementById("loginPassStep").classList.remove("hidden");
-        document.getElementById("loginSubmitBtn").click();
+      const savedPhone = localStorage.getItem("student_auth_phone");
+      const savedPass = localStorage.getItem("student_auth_pass");
+      if (savedPhone && savedPass) {
+        activePhone = savedPhone;
+        activePassword = savedPass;
+        handlePasswordLogin();
       }
     });
   </script>

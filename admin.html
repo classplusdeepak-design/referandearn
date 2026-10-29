@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin - Program Management</title>
+  <title>Admin - Program Management & Analytics</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen">
@@ -37,29 +38,98 @@
 
   <!-- Admin Main Dashboard -->
   <div id="adminMainSection" class="hidden min-h-screen flex flex-col">
-    <header class="bg-slate-900 text-white sticky top-0 z-30">
+    <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md">
       <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-        <span class="font-bold text-sm tracking-wide"><i class="fa-solid fa-chart-line mr-2"></i>Referral Management Engine</span>
-        <button onclick="location.reload()" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg">Logout</button>
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-chart-line text-indigo-400"></i>
+          <span class="font-bold text-sm tracking-wide">Affiliate Control Center</span>
+          <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse ml-2" title="Real-time 2.5s Sync Active"></span>
+          <span class="text-[10px] text-emerald-400 font-mono hidden sm:inline">LIVE SYNC (2.5s)</span>
+        </div>
+        <button onclick="handleAdminLogout()" class="text-xs bg-rose-600 hover:bg-rose-700 text-white font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1 transition">
+          <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </button>
       </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
       
       <!-- Top Action Bar -->
-      <div class="flex justify-between items-center">
+      <div class="flex flex-wrap justify-between items-center gap-3">
         <div>
-          <h2 class="text-lg font-bold text-slate-900">Program Live Overview</h2>
-          <p class="text-xs text-slate-500">Real-time status of student logins, referrals, and payouts.</p>
+          <h2 class="text-lg font-bold text-slate-900">Executive Performance Dashboard</h2>
+          <p class="text-xs text-slate-500">Live telemetry auto-updating continuously in background.</p>
         </div>
-        <button onclick="openAddCourseModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3.5 py-2 rounded-lg shadow">
-          <i class="fa-solid fa-plus mr-1"></i> Add New Course Link
-        </button>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="downloadReportCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-lg shadow flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-file-csv text-sm"></i> Download Report (CSV)
+          </button>
+          <button onclick="refreshDashboardData()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-3 py-2 rounded-lg shadow flex items-center gap-1.5">
+            <i class="fa-solid fa-arrows-rotate" id="syncIcon"></i> Force Sync
+          </button>
+          <button onclick="openOfferModal()" class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-2 rounded-lg shadow flex items-center gap-1.5">
+            <i class="fa-solid fa-bullhorn"></i> Live Offer Manager
+          </button>
+          <button onclick="openAddCourseModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-2 rounded-lg shadow flex items-center gap-1.5">
+            <i class="fa-solid fa-plus"></i> Add Course Link
+          </button>
+        </div>
       </div>
 
-      <!-- Pending Claims Section -->
+      <!-- Charts -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm lg:col-span-2">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="font-bold text-sm text-slate-900">Top Performing Affiliates</h3>
+            <span class="text-[11px] text-slate-400 font-medium">Ranked by Earnings</span>
+          </div>
+          <div class="h-64">
+            <canvas id="affiliatesChart"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="font-bold text-sm text-slate-900">Referral Traffic Conversion</h3>
+            <span class="text-[11px] text-slate-400 font-medium">Click-to-Sale Ratio</span>
+          </div>
+          <div class="h-56 flex items-center justify-center">
+            <canvas id="conversionPieChart"></canvas>
+          </div>
+          <p id="conversionRateLabel" class="text-center text-xs font-semibold text-slate-600 mt-2">Overall Conversion: 0%</p>
+        </div>
+      </div>
+
+      <!-- Active Courses List (With Image, Edit & Delete) -->
       <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-        <h3 class="font-bold text-sm text-slate-900 mb-3"><i class="fa-solid fa-money-check-dollar mr-2 text-emerald-600"></i>Pending Payout Claims</h3>
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-book text-amber-600"></i> Active Referral Courses
+          </h3>
+          <span id="coursesCountBadge" class="bg-amber-50 text-amber-700 text-[11px] font-bold px-2 py-0.5 rounded-full">0 Courses</span>
+        </div>
+        <div class="overflow-x-auto text-xs">
+          <table class="w-full text-left">
+            <thead class="bg-slate-50 text-slate-500 border-b">
+              <tr>
+                <th class="py-2.5 px-2">Image</th>
+                <th class="py-2.5 px-2">Course ID</th>
+                <th class="py-2.5 px-2">Title</th>
+                <th class="py-2.5 px-2">Store Link</th>
+                <th class="py-2.5 px-2">Commission %</th>
+                <th class="py-2.5 px-2 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="adminCoursesTable" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pending Claims Section (With Pay, Reject & Direct Delete) -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+        <h3 class="font-bold text-sm text-slate-900 mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-money-check-dollar text-emerald-600"></i> Payout Claims Management
+        </h3>
         <div class="overflow-x-auto text-xs">
           <table class="w-full text-left">
             <thead class="bg-slate-50 text-slate-500 border-b">
@@ -70,7 +140,7 @@
                 <th class="py-2 px-2">Transfer Details</th>
                 <th class="py-2 px-2">Date</th>
                 <th class="py-2 px-2">Status</th>
-                <th class="py-2 px-2">Action</th>
+                <th class="py-2 px-2 text-right">Actions</th>
               </tr>
             </thead>
             <tbody id="adminClaimsTable" class="divide-y divide-slate-100"></tbody>
@@ -78,21 +148,49 @@
         </div>
       </div>
 
-      <!-- Registered Students & Activity Log -->
-      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-        <h3 class="font-bold text-sm text-slate-900 mb-3"><i class="fa-solid fa-users mr-2 text-indigo-600"></i>Student Referrers Directory & Performance</h3>
-        <div class="overflow-x-auto text-xs">
+      <!-- Registered Students Performance Directory -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-2 border-b border-slate-100">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-users text-indigo-600 text-base"></i>
+            <h3 class="font-bold text-sm text-slate-900">Student Referrers Directory & Performance</h3>
+            <span id="studentTotalBadge" class="bg-indigo-50 text-indigo-700 text-[11px] font-bold px-2 py-0.5 rounded-full">0</span>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-400">
+                <i class="fa-solid fa-magnifying-glass"></i>
+              </span>
+              <input type="text" id="studentSearchInput" oninput="handleStudentFilterChange()" placeholder="Search Name or Mobile..."
+                class="pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 w-48 sm:w-60 text-xs" />
+            </div>
+
+            <div class="relative">
+              <select id="studentSortSelect" onchange="handleStudentFilterChange()" class="border border-slate-200 rounded-lg py-1.5 px-2 bg-white text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="name_asc">Sort: Name (A to Z)</option>
+                <option value="name_desc">Sort: Name (Z to A)</option>
+                <option value="earnings_high">Sort: Highest Earnings</option>
+                <option value="sales_high">Sort: Highest Sales</option>
+                <option value="leads_high">Sort: Highest Leads</option>
+                <option value="custom_comm">Filter: Custom Commission Only</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto text-xs max-h-96 overflow-y-auto">
           <table class="w-full text-left">
-            <thead class="bg-slate-50 text-slate-500 border-b">
+            <thead class="bg-slate-50 text-slate-500 sticky top-0 border-b z-10">
               <tr>
-                <th class="py-2 px-2">Student</th>
-                <th class="py-2 px-2">Last Login</th>
-                <th class="py-2 px-2">Leads Referred</th>
-                <th class="py-2 px-2">Sales Converted</th>
-                <th class="py-2 px-2">Commission Earned</th>
-                <th class="py-2 px-2">Available Balance</th>
-                <th class="py-2 px-2">Commission %</th>
-                <th class="py-2 px-2">Action</th>
+                <th class="py-2.5 px-2">Student</th>
+                <th class="py-2.5 px-2">Last Login</th>
+                <th class="py-2.5 px-2">Leads</th>
+                <th class="py-2.5 px-2">Sales</th>
+                <th class="py-2.5 px-2">Earned</th>
+                <th class="py-2.5 px-2">Balance</th>
+                <th class="py-2.5 px-2">Rate %</th>
+                <th class="py-2.5 px-2 text-right">Actions</th>
               </tr>
             </thead>
             <tbody id="adminStudentsTable" class="divide-y divide-slate-100"></tbody>
@@ -100,38 +198,47 @@
         </div>
       </div>
 
-      <!-- Courses Directory -->
-      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-        <h3 class="font-bold text-sm text-slate-900 mb-3"><i class="fa-solid fa-book mr-2 text-amber-600"></i>Active Courses</h3>
-        <div class="overflow-x-auto text-xs">
-          <table class="w-full text-left">
-            <thead class="bg-slate-50 text-slate-500 border-b">
-              <tr>
-                <th class="py-2 px-2">Course ID</th>
-                <th class="py-2 px-2">Title</th>
-                <th class="py-2 px-2">Store Link</th>
-                <th class="py-2 px-2">Default Commission</th>
-              </tr>
-            </thead>
-            <tbody id="adminCoursesTable" class="divide-y divide-slate-100"></tbody>
-          </table>
-        </div>
-      </div>
-
     </main>
+  </div>
+
+  <!-- Modal: Live Offer Manager -->
+  <div id="offerModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-bold text-slate-900 text-sm">Manage Live Banner Offer & Commission</h3>
+        <button onclick="closeOfferModal()" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form onsubmit="handleOfferSubmit(event)" class="space-y-3.5 text-xs">
+        <div>
+          <label class="font-semibold text-slate-700">Announcement / Banner Message</label>
+          <textarea id="offerInputText" rows="2" placeholder="e.g. Special Offer: 20% commission on all courses today!" class="w-full mt-1 p-2 border rounded-lg" required></textarea>
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700">Offer Commission % (Auto-apply to all courses)</label>
+          <input type="number" id="offerCommPercent" min="1" max="100" placeholder="e.g. 20 (Leave blank for default)" class="w-full mt-1 p-2 border rounded-lg font-bold text-indigo-600" />
+        </div>
+        <div class="flex items-center gap-2 pt-1">
+          <input type="checkbox" id="offerActiveCheck" class="w-4 h-4 text-indigo-600 rounded">
+          <label for="offerActiveCheck" class="font-semibold text-slate-700">Make this offer live right now</label>
+        </div>
+        <button type="submit" id="saveOfferBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2.5 rounded-lg text-sm shadow mt-2">
+          Update Live Offer
+        </button>
+      </form>
+    </div>
   </div>
 
   <!-- Modal: Add New Course -->
   <div id="addCourseModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
       <div class="flex justify-between items-center mb-4">
-        <h3 class="font-bold text-slate-900 text-sm">Add New Course to Referral Program</h3>
+        <h3 class="font-bold text-slate-900 text-sm">Add New Course Link</h3>
         <button onclick="closeAddCourseModal()" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <form onsubmit="handleAddCourseSubmit(event)" class="space-y-3 text-xs">
         <div>
           <label class="font-semibold text-slate-700">Course Store URL</label>
-          <input type="url" id="newCourseUrl" placeholder="https://obqype.courses.store/843481" class="w-full mt-1 p-2 border rounded-lg" required onchange="extractCourseId(this.value)" />
+          <input type="url" id="newCourseUrl" placeholder="https://obqype.courses.store/843481" class="w-full mt-1 p-2 border rounded-lg" required onchange="extractCourseId(this.value, 'newCourseId')" />
         </div>
         <div>
           <label class="font-semibold text-slate-700">Course ID</label>
@@ -142,7 +249,7 @@
           <input type="text" id="newCourseTitle" placeholder="Course Name" class="w-full mt-1 p-2 border rounded-lg" required />
         </div>
         <div>
-          <label class="font-semibold text-slate-700">Image URL</label>
+          <label class="font-semibold text-slate-700">Image Thumbnail URL</label>
           <input type="url" id="newCourseImg" placeholder="https://..." class="w-full mt-1 p-2 border rounded-lg" />
         </div>
         <div>
@@ -156,22 +263,66 @@
     </div>
   </div>
 
+  <!-- Modal: Edit Existing Course -->
+  <div id="editCourseModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-bold text-slate-900 text-sm">Edit Course Details</h3>
+        <button onclick="closeEditCourseModal()" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form onsubmit="handleEditCourseSubmit(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="font-semibold text-slate-700">Course ID (Fixed)</label>
+          <input type="text" id="editCourseId" readonly class="w-full mt-1 p-2 border rounded-lg font-mono bg-slate-100 font-bold text-slate-600" />
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700">Course Title</label>
+          <input type="text" id="editCourseTitle" class="w-full mt-1 p-2 border rounded-lg font-medium" required />
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700">Course Store URL</label>
+          <input type="url" id="editCourseUrl" class="w-full mt-1 p-2 border rounded-lg" required />
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700">Image Thumbnail URL</label>
+          <input type="url" id="editCourseImg" placeholder="https://..." class="w-full mt-1 p-2 border rounded-lg" />
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700">Commission %</label>
+          <input type="number" id="editCourseComm" min="1" max="100" class="w-full mt-1 p-2 border rounded-lg font-bold text-indigo-600" required />
+        </div>
+        <button type="submit" id="updateCourseBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg text-sm mt-3 shadow">
+          Update Course Details
+        </button>
+      </form>
+    </div>
+  </div>
+
   <script>
     let adminToken = "";
+    let rawStudentsData = [];
+    let currentCoursesList = [];
+    let currentClaimsList = [];
+    let barChartInstance = null;
+    let pieChartInstance = null;
+    let isAdminSyncing = false;
+    let adminSyncInterval = null;
 
-    function extractCourseId(url) {
+    function extractCourseId(url, targetInputId) {
       const match = url.match(/\/(\d+)(\/|\?|$)/);
       if (match && match[1]) {
-        document.getElementById("newCourseId").value = match[1];
+        document.getElementById(targetInputId).value = match[1];
       }
     }
 
     async function handleAdminLogin(e) {
-      e.preventDefault();
-      const pass = document.getElementById("adminPass").value;
+      if (e) e.preventDefault();
+      const pass = document.getElementById("adminPass").value.trim() || adminToken;
       const btn = document.getElementById("adminLoginBtn");
-      btn.innerText = "Verifying...";
-      btn.disabled = true;
+      if (btn) {
+        btn.innerText = "Verifying...";
+        btn.disabled = true;
+      }
 
       try {
         const res = await fetch(`${SCRIPT_URL}?action=getAdminData&password=${encodeURIComponent(pass)}`);
@@ -179,40 +330,126 @@
 
         if (data.status === "success") {
           adminToken = pass;
+          localStorage.setItem("admin_auth_token", pass);
           document.getElementById("adminLoginSection").classList.add("hidden");
           document.getElementById("adminMainSection").classList.remove("hidden");
           renderAdminData(data);
+          startAdminRealtimeSync();
         } else {
           alert("Incorrect Password.");
+          localStorage.removeItem("admin_auth_token");
         }
       } catch (err) {
         alert("Server connection failed.");
       } finally {
-        btn.innerText = "Unlock Dashboard";
-        btn.disabled = false;
+        if (btn) {
+          btn.innerText = "Unlock Dashboard";
+          btn.disabled = false;
+        }
       }
     }
 
-    function renderAdminData(data) {
-      // Courses
+    function startAdminRealtimeSync() {
+      if (adminSyncInterval) clearInterval(adminSyncInterval);
+      adminSyncInterval = setInterval(async () => {
+        if (!adminToken || isAdminSyncing) return;
+
+        const isSearchFocused = document.activeElement === document.getElementById("studentSearchInput");
+        const isAnyModalOpen = !document.getElementById("offerModal").classList.contains("hidden") ||
+                               !document.getElementById("addCourseModal").classList.contains("hidden") ||
+                               !document.getElementById("editCourseModal").classList.contains("hidden");
+
+        isAdminSyncing = true;
+        try {
+          const res = await fetch(`${SCRIPT_URL}?action=getAdminData&password=${encodeURIComponent(adminToken)}`);
+          const data = await res.json();
+          if (data && data.status === "success") {
+            if (!isAnyModalOpen) {
+              renderAdminData(data, isSearchFocused);
+            }
+          }
+        } catch (e) {
+          console.warn("Admin auto-sync retry", e);
+        } finally {
+          isAdminSyncing = false;
+        }
+      }, 2500);
+    }
+
+    async function refreshDashboardData() {
+      const syncIcon = document.getElementById("syncIcon");
+      if (syncIcon) syncIcon.classList.add("fa-spin");
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=getAdminData&password=${encodeURIComponent(adminToken)}`);
+        const data = await res.json();
+        if (data.status === "success") {
+          renderAdminData(data, false);
+        }
+      } catch (e) {
+        console.error("Refresh failed", e);
+      } finally {
+        if (syncIcon) syncIcon.classList.remove("fa-spin");
+      }
+    }
+
+    function renderAdminData(data, preserveSearchFocus = false) {
+      rawStudentsData = data.students || [];
+      currentCoursesList = data.courses || [];
+      currentClaimsList = data.claims || [];
+
+      if (data.offer) {
+        document.getElementById("offerInputText").value = data.offer.text || "";
+        document.getElementById("offerCommPercent").value = data.offer.commissionPercent || "";
+        document.getElementById("offerActiveCheck").checked = true;
+      } else {
+        document.getElementById("offerInputText").value = "";
+        document.getElementById("offerCommPercent").value = "";
+        document.getElementById("offerActiveCheck").checked = false;
+      }
+
+      renderCharts(rawStudentsData);
+      applyStudentFilters();
+
+      // Courses Table Rendering
       const cTable = document.getElementById("adminCoursesTable");
-      cTable.innerHTML = "";
-      data.courses.forEach(c => {
+      document.getElementById("coursesCountBadge").innerText = `${currentCoursesList.length} Courses`;
+      cTable.innerHTML = currentCoursesList.length ? "" : `<tr><td colspan="6" class="py-4 text-center text-slate-400">No active courses added.</td></tr>`;
+
+      currentCoursesList.forEach(c => {
+        const imgTag = c.imageUrl 
+          ? `<img src="${c.imageUrl}" class="w-10 h-10 object-cover rounded-lg border border-slate-200">`
+          : `<div class="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 border border-slate-200"><i class="fa-solid fa-image"></i></div>`;
+
         cTable.innerHTML += `
           <tr>
+            <td class="py-2 px-2">${imgTag}</td>
             <td class="py-2.5 px-2 font-mono font-bold">${c.courseId}</td>
             <td class="py-2.5 px-2 font-medium">${c.title}</td>
             <td class="py-2.5 px-2"><a href="${c.storeUrl}" target="_blank" class="text-indigo-600 truncate max-w-xs block">${c.storeUrl}</a></td>
-            <td class="py-2.5 px-2 font-bold">${c.defaultCommission}%</td>
+            <td class="py-2.5 px-2 font-bold text-emerald-600">${c.defaultCommission}%</td>
+            <td class="py-2.5 px-2 text-right">
+              <div class="inline-flex items-center gap-1.5">
+                <button onclick="openEditCourseModal('${c.courseId}')" class="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-xs" title="Edit Course">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button onclick="deleteCourse('${c.courseId}')" class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs" title="Delete Course">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </td>
           </tr>
         `;
       });
 
-      // Claims
+      // Claims Table (With Pay, Reject Reason & Direct Delete Claim Button)
       const clTable = document.getElementById("adminClaimsTable");
-      clTable.innerHTML = data.claims.length ? "" : `<tr><td colspan="7" class="py-4 text-center text-slate-400">No payout claims recorded.</td></tr>`;
-      data.claims.forEach(cl => {
+      clTable.innerHTML = currentClaimsList.length ? "" : `<tr><td colspan="7" class="py-4 text-center text-slate-400">No payout claims recorded.</td></tr>`;
+      currentClaimsList.forEach(cl => {
         const [claimId, phone, amount, method, details, date, status, txRef] = cl;
+        const isPaid = status === 'Paid' || status === 'Approved';
+        const isRejected = status === 'Rejected';
+        const badgeColor = isPaid ? 'bg-emerald-100 text-emerald-700' : (isRejected ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700');
+
         clTable.innerHTML += `
           <tr>
             <td class="py-2.5 px-2 font-mono font-bold">${claimId}</td>
@@ -220,20 +457,70 @@
             <td class="py-2.5 px-2 font-bold text-emerald-600">₹${amount}</td>
             <td class="py-2.5 px-2">${method}: ${details}</td>
             <td class="py-2.5 px-2 text-slate-500">${new Date(date).toLocaleDateString()}</td>
-            <td class="py-2.5 px-2"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${status === 'Paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${status}</span></td>
             <td class="py-2.5 px-2">
-              ${status === 'Pending' ? `
-                <button onclick="markClaimPaid('${claimId}')" class="bg-emerald-600 text-white px-2.5 py-1 rounded text-[11px] font-semibold hover:bg-emerald-700">Mark Paid</button>
-              ` : `<span class="text-slate-400 font-mono text-[11px]">UTR: ${txRef || 'Done'}</span>`}
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${badgeColor}">${status}</span>
+              ${txRef ? `<span class="block text-[10px] text-slate-400 font-mono mt-0.5">${txRef}</span>` : ''}
+            </td>
+            <td class="py-2.5 px-2 text-right">
+              <div class="inline-flex items-center gap-1.5">
+                ${status === 'Pending' ? `
+                  <button onclick="markClaimPaid('${claimId}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded text-[11px] font-semibold">
+                    Pay
+                  </button>
+                  <button onclick="rejectClaimPrompt('${claimId}')" class="bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded text-[11px] font-semibold">
+                    Reject
+                  </button>
+                ` : ``}
+                <button onclick="deleteSingleClaimRecord('${claimId}')" class="text-rose-600 hover:bg-rose-50 p-1.5 rounded text-xs" title="Delete Claim from Sheet">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
             </td>
           </tr>
         `;
       });
+    }
 
-      // Students
+    function handleStudentFilterChange() {
+      applyStudentFilters();
+    }
+
+    function getFilteredStudents() {
+      const query = (document.getElementById("studentSearchInput").value || "").toLowerCase().trim();
+      const sortType = document.getElementById("studentSortSelect").value;
+
+      let list = [...rawStudentsData];
+
+      if (query) {
+        list = list.filter(s => 
+          (s.name && s.name.toLowerCase().includes(query)) ||
+          (s.phone && s.phone.includes(query))
+        );
+      }
+
+      if (sortType === "name_asc") {
+        list.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+      } else if (sortType === "name_desc") {
+        list.sort((a, b) => (b.name || "").localeCompare(a.name || ""));
+      } else if (sortType === "earnings_high") {
+        list.sort((a, b) => b.totalEarned - a.totalEarned);
+      } else if (sortType === "sales_high") {
+        list.sort((a, b) => b.conversions - a.conversions);
+      } else if (sortType === "leads_high") {
+        list.sort((a, b) => b.totalLeads - a.totalLeads);
+      } else if (sortType === "custom_comm") {
+        list = list.filter(s => s.customCommission !== null);
+      }
+      return list;
+    }
+
+    function applyStudentFilters() {
+      const list = getFilteredStudents();
+      document.getElementById("studentTotalBadge").innerText = `${list.length} Students`;
+
       const sTable = document.getElementById("adminStudentsTable");
-      sTable.innerHTML = data.students.length ? "" : `<tr><td colspan="8" class="py-4 text-center text-slate-400">No students registered yet.</td></tr>`;
-      data.students.forEach(s => {
+      sTable.innerHTML = list.length ? "" : `<tr><td colspan="8" class="py-6 text-center text-slate-400 font-medium">Koi student match nahi hua.</td></tr>`;
+      list.forEach(s => {
         sTable.innerHTML += `
           <tr>
             <td class="py-2.5 px-2">
@@ -246,12 +533,196 @@
             <td class="py-2.5 px-2 font-bold text-slate-900">₹${s.totalEarned.toFixed(2)}</td>
             <td class="py-2.5 px-2 font-bold text-emerald-600">₹${s.availableBalance.toFixed(2)}</td>
             <td class="py-2.5 px-2 font-bold text-indigo-600">${s.customCommission !== null ? s.customCommission + '%' : 'Default'}</td>
-            <td class="py-2.5 px-2">
-              <button onclick="setCustomCommission('${s.phone}', '${s.customCommission || ''}')" class="text-indigo-600 hover:underline font-semibold">Assign %</button>
+            <td class="py-2.5 px-2 text-right">
+              <div class="inline-flex items-center gap-1.5">
+                <button onclick="setCustomCommission('${s.phone}', '${s.customCommission || ''}')" class="text-indigo-600 hover:bg-indigo-50 p-1.5 rounded text-xs font-semibold" title="Assign Custom %">
+                  <i class="fa-solid fa-percent"></i>
+                </button>
+                <button onclick="deleteStudentRecord('${s.phone}', ${s.conversions})" class="text-rose-600 hover:bg-rose-50 p-1.5 rounded text-xs" title="Delete Student and all their claim data">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
             </td>
           </tr>
         `;
       });
+    }
+
+    // CSV REPORT DOWNLOAD (TOTAL LEADS, TOTAL SALES, TOTAL EARNED, TOTAL PAID, BALANCE)
+    function downloadReportCSV() {
+      const list = getFilteredStudents();
+      if (!list || list.length === 0) {
+        alert("Koi data available nahi hai download karne ke liye.");
+        return;
+      }
+
+      // Calculate total payouts paid per student from claims
+      const paidMap = {};
+      const pendingMap = {};
+      currentClaimsList.forEach(cl => {
+        const phone = (cl[1] || "").toString().trim().replace(/\D/g, "");
+        const amt = parseFloat(cl[2]) || 0;
+        const status = cl[6];
+        if (status === "Paid" || status === "Approved") {
+          paidMap[phone] = (paidMap[phone] || 0) + amt;
+        }
+        if (status === "Pending") {
+          pendingMap[phone] = (pendingMap[phone] || 0) + amt;
+        }
+      });
+
+      // CSV Headers
+      const headers = [
+        "Student Name",
+        "Phone Number",
+        "Email",
+        "UPI / PhonePe",
+        "Bank Details",
+        "Last Login",
+        "Total Leads (Clicks)",
+        "Total Sales Converted",
+        "Total Commission Earned (INR)",
+        "Total Payout Paid (INR)",
+        "Pending Payout Claim (INR)",
+        "Available Balance (INR)",
+        "Commission Rate %"
+      ];
+
+      const csvRows = [];
+      csvRows.push(headers.join(","));
+
+      list.forEach(s => {
+        const p = s.phone.replace(/\D/g, "");
+        const totalPaid = (paidMap[p] || 0).toFixed(2);
+        const totalPending = (pendingMap[p] || 0).toFixed(2);
+
+        const row = [
+          `"${(s.name || '').replace(/"/g, '""')}"`,
+          `"${s.phone}"`,
+          `"${(s.email || '').replace(/"/g, '""')}"`,
+          `"${(s.upi || '').replace(/"/g, '""')}"`,
+          `"${(s.bank || '').replace(/"/g, '""')}"`,
+          `"${s.lastLogin !== 'Never' ? new Date(s.lastLogin).toLocaleString() : 'Never'}"`,
+          s.totalLeads,
+          s.conversions,
+          s.totalEarned.toFixed(2),
+          totalPaid,
+          totalPending,
+          s.availableBalance.toFixed(2),
+          s.customCommission !== null ? s.customCommission : "Default"
+        ];
+        csvRows.push(row.join(","));
+      });
+
+      const csvString = "data:text/csv;charset=utf-8," + encodeURIComponent(csvRows.join("\n"));
+      const downloadAnchor = document.createElement("a");
+      downloadAnchor.setAttribute("href", csvString);
+      const filename = `Referral_Report_${new Date().toISOString().slice(0, 10)}.csv`;
+      downloadAnchor.setAttribute("download", filename);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function renderCharts(students) {
+      const topStudents = [...students].sort((a, b) => b.totalEarned - a.totalEarned).slice(0, 6);
+      const labels = topStudents.map(s => s.name.split(" ")[0]);
+      const earnings = topStudents.map(s => s.totalEarned);
+      const conversions = topStudents.map(s => s.conversions);
+
+      let totalLeads = 0;
+      let totalConversions = 0;
+      students.forEach(s => {
+        totalLeads += s.totalLeads;
+        totalConversions += s.conversions;
+      });
+
+      const ctxBar = document.getElementById("affiliatesChart").getContext("2d");
+      if (barChartInstance) barChartInstance.destroy();
+      barChartInstance = new Chart(ctxBar, {
+        type: "bar",
+        data: {
+          labels: labels.length ? labels : ["No data"],
+          datasets: [
+            {
+              label: "Commission Earned (₹)",
+              data: earnings.length ? earnings : [0],
+              backgroundColor: "rgba(79, 70, 229, 0.8)",
+              borderRadius: 6
+            },
+            {
+              label: "Sales Converted",
+              data: conversions.length ? conversions : [0],
+              backgroundColor: "rgba(16, 185, 129, 0.8)",
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+
+      const unconverted = Math.max(0, totalLeads - totalConversions);
+      const ctxPie = document.getElementById("conversionPieChart").getContext("2d");
+      if (pieChartInstance) pieChartInstance.destroy();
+      pieChartInstance = new Chart(ctxPie, {
+        type: "doughnut",
+        data: {
+          labels: ["Converted Sales", "Unconverted Clicks"],
+          datasets: [{
+            data: [totalConversions, unconverted],
+            backgroundColor: ["#10b981", "#cbd5e1"]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+
+      const rate = totalLeads > 0 ? ((totalConversions / totalLeads) * 100).toFixed(1) : 0;
+      document.getElementById("conversionRateLabel").innerText = `Overall Conversion: ${rate}% (${totalConversions} sales out of ${totalLeads} clicks)`;
+    }
+
+    function openOfferModal() {
+      document.getElementById("offerModal").classList.remove("hidden");
+      document.getElementById("offerModal").classList.add("flex");
+    }
+
+    function closeOfferModal() {
+      document.getElementById("offerModal").classList.add("hidden");
+      document.getElementById("offerModal").classList.remove("flex");
+    }
+
+    async function handleOfferSubmit(e) {
+      e.preventDefault();
+      const text = document.getElementById("offerInputText").value.trim();
+      const comm = document.getElementById("offerCommPercent").value.trim();
+      const isActive = document.getElementById("offerActiveCheck").checked;
+      const btn = document.getElementById("saveOfferBtn");
+      btn.innerText = "Saving...";
+      btn.disabled = true;
+
+      await fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({
+          action: "adminSaveOffer",
+          offerText: text,
+          commissionPercent: comm,
+          isActive: isActive
+        })
+      });
+
+      alert("Live Offer updated!");
+      btn.innerText = "Update Live Offer";
+      btn.disabled = false;
+      closeOfferModal();
+      refreshDashboardData();
     }
 
     function openAddCourseModal() {
@@ -286,8 +757,121 @@
       });
 
       alert("Course added successfully!");
+      btn.innerText = "Save Course";
+      btn.disabled = false;
       closeAddCourseModal();
-      location.reload();
+      refreshDashboardData();
+    }
+
+    function openEditCourseModal(courseId) {
+      const course = currentCoursesList.find(c => c.courseId.toString() === courseId.toString());
+      if (!course) return;
+
+      document.getElementById("editCourseId").value = course.courseId;
+      document.getElementById("editCourseTitle").value = course.title;
+      document.getElementById("editCourseUrl").value = course.storeUrl;
+      document.getElementById("editCourseImg").value = course.imageUrl || "";
+      document.getElementById("editCourseComm").value = course.defaultCommission;
+
+      document.getElementById("editCourseModal").classList.remove("hidden");
+      document.getElementById("editCourseModal").classList.add("flex");
+    }
+
+    function closeEditCourseModal() {
+      document.getElementById("editCourseModal").classList.add("hidden");
+      document.getElementById("editCourseModal").classList.remove("flex");
+    }
+
+    async function handleEditCourseSubmit(e) {
+      e.preventDefault();
+      const payload = {
+        action: "adminEditCourse",
+        courseId: document.getElementById("editCourseId").value.trim(),
+        title: document.getElementById("editCourseTitle").value.trim(),
+        imageUrl: document.getElementById("editCourseImg").value.trim(),
+        storeUrl: document.getElementById("editCourseUrl").value.trim(),
+        commission: parseFloat(document.getElementById("editCourseComm").value)
+      };
+
+      const btn = document.getElementById("updateCourseBtn");
+      btn.innerText = "Updating...";
+      btn.disabled = true;
+
+      await fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify(payload)
+      });
+
+      alert("Course details updated successfully!");
+      btn.innerText = "Update Course Details";
+      btn.disabled = false;
+      closeEditCourseModal();
+      refreshDashboardData();
+    }
+
+    async function deleteCourse(courseId) {
+      const conf = confirm(`Are you sure you want to remove Course ID: ${courseId}? Yeh student portal se hat jayega.`);
+      if (!conf) return;
+
+      await fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({
+          action: "adminDeleteCourse",
+          courseId: courseId
+        })
+      });
+
+      alert("Course successfully removed!");
+      refreshDashboardData();
+    }
+
+    async function deleteStudentRecord(phone, conversions) {
+      if (conversions > 0) {
+        alert(`Ye student delete nahi ho sakta kyunki isne ${conversions} course sales generate ki hain! System sale records delete karna allow nahi karta.`);
+        return;
+      }
+
+      const conf = confirm(`Are you sure you want to completely remove student (${phone})? Unka referral program access, leads aur saare payout claims permanently delete ho jayenge.`);
+      if (!conf) return;
+
+      const res = await fetch(SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "adminDeleteStudent",
+          phone: phone
+        })
+      });
+
+      try {
+        const data = await res.json();
+        if (data.status === "success") {
+          alert("Student aur unka claim data permanently delete ho gaya!");
+          refreshDashboardData();
+        } else {
+          alert(data.message || "Failed to delete student.");
+        }
+      } catch (e) {
+        alert("Student data clean process submitted.");
+        refreshDashboardData();
+      }
+    }
+
+    async function deleteSingleClaimRecord(claimId) {
+      const conf = confirm(`Delete claim request (${claimId}) from sheet?`);
+      if (!conf) return;
+
+      await fetch(SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "adminDeleteSingleClaim",
+          claimId: claimId
+        })
+      });
+
+      alert("Claim deleted successfully!");
+      refreshDashboardData();
     }
 
     async function setCustomCommission(phone, current) {
@@ -303,7 +887,7 @@
           })
         });
         alert("Custom commission assigned successfully!");
-        location.reload();
+        refreshDashboardData();
       }
     }
 
@@ -320,10 +904,41 @@
             txRef: ref
           })
         });
-        alert("Marked as Paid. Student dashboard updated!");
-        location.reload();
+        alert("Marked as Paid. Balance permanently deducted!");
+        refreshDashboardData();
       }
     }
+
+    async function rejectClaimPrompt(claimId) {
+      const reason = prompt("Enter reason for rejecting this claim (e.g., Invalid UPI ID, Bank detail mismatch):", "Invalid UPI/Bank Details");
+      if (reason !== null && reason.trim() !== "") {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          body: JSON.stringify({
+            action: "adminRejectClaim",
+            claimId: claimId,
+            reason: reason.trim()
+          })
+        });
+        alert("Claim rejected.");
+        refreshDashboardData();
+      }
+    }
+
+    function handleAdminLogout() {
+      localStorage.removeItem("admin_auth_token");
+      if (adminSyncInterval) clearInterval(adminSyncInterval);
+      location.reload();
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedToken = localStorage.getItem("admin_auth_token");
+      if (savedToken) {
+        adminToken = savedToken;
+        handleAdminLogin();
+      }
+    });
   </script>
 </body>
 </html>
