@@ -125,7 +125,7 @@
         </div>
       </div>
 
-      <!-- Pending Claims Section (With Pay, Reject & Direct Delete) -->
+      <!-- Pending Claims Section -->
       <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
         <h3 class="font-bold text-sm text-slate-900 mb-3 flex items-center gap-2">
           <i class="fa-solid fa-money-check-dollar text-emerald-600"></i> Payout Claims Management
@@ -240,6 +240,103 @@
     </main>
   </div>
 
+  <!-- Modal: Live Offer Manager -->
+  <div id="offerModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-bold text-slate-900 text-sm">Manage Live Banner Offer & Commission</h3>
+        <button onclick="closeOfferModal()" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form onsubmit="handleOfferSubmit(event)" class="space-y-3.5 text-xs">
+        <div>
+          <label class="font-semibold text-slate-700">Announcement / Banner Message</label>
+          <textarea id="offerInputText" rows="2" placeholder="e.g. Special Offer: 20% commission on all courses today!" class="w-full mt-1 p-2 border rounded-lg" required></textarea>
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700">Offer Commission % (Auto-apply to all courses)</label>
+          <input type="number" id="offerCommPercent" min="1" max="100" placeholder="e.g. 20 (Leave blank for default)" class="w-full mt-1 p-2 border rounded-lg font-bold text-indigo-600" />
+        </div>
+        <div class="flex items-center gap-2 pt-1">
+          <input type="checkbox" id="offerActiveCheck" class="w-4 h-4 text-indigo-600 rounded">
+          <label for="offerActiveCheck" class="font-semibold text-slate-700">Make this offer live right now</label>
+        </div>
+        <button type="submit" id="saveOfferBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2.5 rounded-lg text-sm shadow mt-2">
+          Update Live Offer
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add New Course -->
+  <div id="addCourseModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-bold text-slate-900 text-sm">Add New Course Link</h3>
+        <button onclick="closeAddCourseModal()" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form onsubmit="handleAddCourseSubmit(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="font-semibold text-slate-700">Course Store URL</label>
+          <input type="url" id="newCourseUrl" placeholder="https://obqype.courses.store/843481" class="w-full mt-1 p-2 border rounded-lg" required onchange="extractCourseId(this.value, 'newCourseId')" />
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700">Course ID</label>
+          <input type="text" id="newCourseId" placeholder="843481" class="w-full mt-1 p-2 border rounded-lg font-mono font-bold" required />
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700">Course Title</label>
+          <input type="text" id="newCourseTitle" placeholder="Course Name" class="w-full mt-1 p-2 border rounded-lg" required />
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700">Image Thumbnail URL</label>
+          <input type="url" id="newCourseImg" placeholder="https://..." class="w-full mt-1 p-2 border rounded-lg" />
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700">Default Commission %</label>
+          <input type="number" id="newCourseComm" value="10" min="1" max="100" class="w-full mt-1 p-2 border rounded-lg font-bold" required />
+        </div>
+        <button type="submit" id="saveCourseBtn" class="w-full bg-slate-900 text-white font-semibold py-2.5 rounded-lg text-sm mt-3">
+          Save Course
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Existing Course -->
+  <div id="editCourseModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-bold text-slate-900 text-sm">Edit Course Details</h3>
+        <button onclick="closeEditCourseModal()" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form onsubmit="handleEditCourseSubmit(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="font-semibold text-slate-700">Course ID (Fixed)</label>
+          <input type="text" id="editCourseId" readonly class="w-full mt-1 p-2 border rounded-lg font-mono bg-slate-100 font-bold text-slate-600" />
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700">Course Title</label>
+          <input type="text" id="editCourseTitle" class="w-full mt-1 p-2 border rounded-lg font-medium" required />
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700">Course Store URL</label>
+          <input type="url" id="editCourseUrl" class="w-full mt-1 p-2 border rounded-lg" required />
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700">Image Thumbnail URL</label>
+          <input type="url" id="editCourseImg" placeholder="https://..." class="w-full mt-1 p-2 border rounded-lg" />
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700">Commission %</label>
+          <input type="number" id="editCourseComm" min="1" max="100" class="w-full mt-1 p-2 border rounded-lg font-bold text-indigo-600" required />
+        </div>
+        <button type="submit" id="updateCourseBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg text-sm mt-3 shadow">
+          Update Course Details
+        </button>
+      </form>
+    </div>
+  </div>
+
   <script>
     let adminToken = "";
     let rawStudentsData = [];
@@ -253,13 +350,15 @@
     function extractCourseId(url, targetInputId) {
       const match = url.match(/\/(\d+)(\/|\?|$)/);
       if (match && match[1]) {
-        document.getElementById(targetInputId).value = match[1];
+        const el = document.getElementById(targetInputId);
+        if (el) el.value = match[1];
       }
     }
 
     async function handleAdminLogin(e) {
       if (e) e.preventDefault();
-      const pass = document.getElementById("adminPass").value.trim() || adminToken;
+      const passInput = document.getElementById("adminPass");
+      const pass = passInput ? passInput.value.trim() : adminToken;
       const btn = document.getElementById("adminLoginBtn");
       if (btn) {
         btn.innerText = "Verifying...";
@@ -270,19 +369,19 @@
         const res = await fetch(`${SCRIPT_URL}?action=getAdminData&password=${encodeURIComponent(pass)}`);
         const data = await res.json();
 
-        if (data.status === "success") {
+        if (data && data.status === "success") {
           adminToken = pass;
           localStorage.setItem("admin_auth_token", pass);
-          document.getElementById("adminLoginSection").classList.add("hidden");
-          document.getElementById("adminMainSection").classList.remove("hidden");
+          document.getElementById("adminLoginSection")?.classList.add("hidden");
+          document.getElementById("adminMainSection")?.classList.remove("hidden");
           renderAdminData(data);
           startAdminRealtimeSync();
         } else {
-          alert("Incorrect Password.");
+          alert("Login Failed: " + (data.message || "Incorrect password"));
           localStorage.removeItem("admin_auth_token");
         }
       } catch (err) {
-        alert("Server connection failed.");
+        alert("Execution Error: " + err.message);
       } finally {
         if (btn) {
           btn.innerText = "Unlock Dashboard";
@@ -298,21 +397,21 @@
 
         const isSearchFocused = (document.activeElement === document.getElementById("studentSearchInput") ||
                                  document.activeElement === document.getElementById("leadsExplorerSearch"));
-        const isAnyModalOpen = !document.getElementById("offerModal").classList.contains("hidden") ||
-                               !document.getElementById("addCourseModal").classList.contains("hidden") ||
-                               !document.getElementById("editCourseModal").classList.contains("hidden");
+        const isOfferOpen = document.getElementById("offerModal") && !document.getElementById("offerModal").classList.contains("hidden");
+        const isAddOpen = document.getElementById("addCourseModal") && !document.getElementById("addCourseModal").classList.contains("hidden");
+        const isEditOpen = document.getElementById("editCourseModal") && !document.getElementById("editCourseModal").classList.contains("hidden");
+
+        if (isOfferOpen || isAddOpen || isEditOpen) return;
 
         isAdminSyncing = true;
         try {
           const res = await fetch(`${SCRIPT_URL}?action=getAdminData&password=${encodeURIComponent(adminToken)}`);
           const data = await res.json();
           if (data && data.status === "success") {
-            if (!isAnyModalOpen) {
-              renderAdminData(data, isSearchFocused);
-            }
+            renderAdminData(data, isSearchFocused);
           }
         } catch (e) {
-          console.warn("Admin auto-sync retry", e);
+          console.warn("Auto sync retry", e);
         } finally {
           isAdminSyncing = false;
         }
@@ -325,7 +424,7 @@
       try {
         const res = await fetch(`${SCRIPT_URL}?action=getAdminData&password=${encodeURIComponent(adminToken)}`);
         const data = await res.json();
-        if (data.status === "success") {
+        if (data && data.status === "success") {
           renderAdminData(data, false);
         }
       } catch (e) {
@@ -336,91 +435,103 @@
     }
 
     function renderAdminData(data, preserveSearchFocus = false) {
+      if (!data) return;
       rawStudentsData = data.students || [];
       currentCoursesList = data.courses || [];
       currentClaimsList = data.claims || [];
 
-      if (data.offer) {
-        document.getElementById("offerInputText").value = data.offer.text || "";
-        document.getElementById("offerCommPercent").value = data.offer.commissionPercent || "";
-        document.getElementById("offerActiveCheck").checked = true;
+      // SAFE ASSIGNMENT (Fixes Cannot set properties of null)
+      const offerInput = document.getElementById("offerInputText");
+      const commInput = document.getElementById("offerCommPercent");
+      const activeCheck = document.getElementById("offerActiveCheck");
+
+      if (data.offer && typeof data.offer === 'object') {
+        if (offerInput) offerInput.value = data.offer.text || "";
+        if (commInput) commInput.value = data.offer.commissionPercent || "";
+        if (activeCheck) activeCheck.checked = true;
       } else {
-        document.getElementById("offerInputText").value = "";
-        document.getElementById("offerCommPercent").value = "";
-        document.getElementById("offerActiveCheck").checked = false;
+        if (offerInput) offerInput.value = "";
+        if (commInput) commInput.value = "";
+        if (activeCheck) activeCheck.checked = false;
       }
 
       renderCharts(rawStudentsData);
       applyStudentFilters();
       renderLeadsExplorerTable();
 
+      // Courses Table Rendering
       const cTable = document.getElementById("adminCoursesTable");
-      document.getElementById("coursesCountBadge").innerText = `${currentCoursesList.length} Courses`;
-      cTable.innerHTML = currentCoursesList.length ? "" : `<tr><td colspan="6" class="py-4 text-center text-slate-400">No active courses added.</td></tr>`;
+      const badge = document.getElementById("coursesCountBadge");
+      if (badge) badge.innerText = `${currentCoursesList.length} Courses`;
+      if (cTable) {
+        cTable.innerHTML = currentCoursesList.length ? "" : `<tr><td colspan="6" class="py-4 text-center text-slate-400">No active courses added.</td></tr>`;
+        currentCoursesList.forEach(c => {
+          const imgTag = c.imageUrl 
+            ? `<img src="${c.imageUrl}" class="w-10 h-10 object-cover rounded-lg border border-slate-200">`
+            : `<div class="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 border border-slate-200"><i class="fa-solid fa-image"></i></div>`;
 
-      currentCoursesList.forEach(c => {
-        const imgTag = c.imageUrl 
-          ? `<img src="${c.imageUrl}" class="w-10 h-10 object-cover rounded-lg border border-slate-200">`
-          : `<div class="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 border border-slate-200"><i class="fa-solid fa-image"></i></div>`;
+          cTable.innerHTML += `
+            <tr>
+              <td class="py-2 px-2">${imgTag}</td>
+              <td class="py-2.5 px-2 font-mono font-bold">${c.courseId}</td>
+              <td class="py-2.5 px-2 font-medium">${c.title}</td>
+              <td class="py-2.5 px-2"><a href="${c.storeUrl}" target="_blank" class="text-indigo-600 truncate max-w-xs block">${c.storeUrl}</a></td>
+              <td class="py-2.5 px-2 font-bold text-emerald-600">${c.defaultCommission}%</td>
+              <td class="py-2.5 px-2 text-right">
+                <div class="inline-flex items-center gap-1.5">
+                  <button onclick="openEditCourseModal('${c.courseId}')" class="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-xs" title="Edit Course">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+                  <button onclick="deleteCourse('${c.courseId}')" class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs" title="Delete Course">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+      }
 
-        cTable.innerHTML += `
-          <tr>
-            <td class="py-2 px-2">${imgTag}</td>
-            <td class="py-2.5 px-2 font-mono font-bold">${c.courseId}</td>
-            <td class="py-2.5 px-2 font-medium">${c.title}</td>
-            <td class="py-2.5 px-2"><a href="${c.storeUrl}" target="_blank" class="text-indigo-600 truncate max-w-xs block">${c.storeUrl}</a></td>
-            <td class="py-2.5 px-2 font-bold text-emerald-600">${c.defaultCommission}%</td>
-            <td class="py-2.5 px-2 text-right">
-              <div class="inline-flex items-center gap-1.5">
-                <button onclick="openEditCourseModal('${c.courseId}')" class="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-xs" title="Edit Course">
-                  <i class="fa-solid fa-pen-to-square"></i>
-                </button>
-                <button onclick="deleteCourse('${c.courseId}')" class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs" title="Delete Course">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-        `;
-      });
-
+      // Claims Table
       const clTable = document.getElementById("adminClaimsTable");
-      clTable.innerHTML = currentClaimsList.length ? "" : `<tr><td colspan="7" class="py-4 text-center text-slate-400">No payout claims recorded.</td></tr>`;
-      currentClaimsList.forEach(cl => {
-        const [claimId, phone, amount, method, details, date, status, txRef] = cl;
-        const isPaid = status === 'Paid' || status === 'Approved';
-        const isRejected = status === 'Rejected';
-        const badgeColor = isPaid ? 'bg-emerald-100 text-emerald-700' : (isRejected ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700');
+      if (clTable) {
+        clTable.innerHTML = currentClaimsList.length ? "" : `<tr><td colspan="7" class="py-4 text-center text-slate-400">No payout claims recorded.</td></tr>`;
+        currentClaimsList.forEach(cl => {
+          const [claimId, phone, amount, method, details, date, status, txRef] = cl;
+          const isPaid = status === 'Paid' || status === 'Approved';
+          const isRejected = status === 'Rejected';
+          const badgeColor = isPaid ? 'bg-emerald-100 text-emerald-700' : (isRejected ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700');
 
-        clTable.innerHTML += `
-          <tr>
-            <td class="py-2.5 px-2 font-mono font-bold">${claimId}</td>
-            <td class="py-2.5 px-2">${phone}</td>
-            <td class="py-2.5 px-2 font-bold text-emerald-600">₹${amount}</td>
-            <td class="py-2.5 px-2">${method}: ${details}</td>
-            <td class="py-2.5 px-2 text-slate-500">${new Date(date).toLocaleDateString()}</td>
-            <td class="py-2.5 px-2">
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${badgeColor}">${status}</span>
-              ${txRef ? `<span class="block text-[10px] text-slate-400 font-mono mt-0.5">${txRef}</span>` : ''}
-            </td>
-            <td class="py-2.5 px-2 text-right">
-              <div class="inline-flex items-center gap-1.5">
-                ${status === 'Pending' ? `
-                  <button onclick="markClaimPaid('${claimId}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded text-[11px] font-semibold">
-                    Pay
+          clTable.innerHTML += `
+            <tr>
+              <td class="py-2.5 px-2 font-mono font-bold">${claimId}</td>
+              <td class="py-2.5 px-2">${phone}</td>
+              <td class="py-2.5 px-2 font-bold text-emerald-600">₹${amount}</td>
+              <td class="py-2.5 px-2">${method}: ${details}</td>
+              <td class="py-2.5 px-2 text-slate-500">${date ? new Date(date).toLocaleDateString() : ''}</td>
+              <td class="py-2.5 px-2">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${badgeColor}">${status}</span>
+                ${txRef ? `<span class="block text-[10px] text-slate-400 font-mono mt-0.5">${txRef}</span>` : ''}
+              </td>
+              <td class="py-2.5 px-2 text-right">
+                <div class="inline-flex items-center gap-1.5">
+                  ${status === 'Pending' ? `
+                    <button onclick="markClaimPaid('${claimId}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded text-[11px] font-semibold">
+                      Pay
+                    </button>
+                    <button onclick="rejectClaimPrompt('${claimId}')" class="bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded text-[11px] font-semibold">
+                      Reject
+                    </button>
+                  ` : ``}
+                  <button onclick="deleteSingleClaimRecord('${claimId}')" class="text-rose-600 hover:bg-rose-50 p-1.5 rounded text-xs" title="Delete Claim from Sheet">
+                    <i class="fa-solid fa-trash"></i>
                   </button>
-                  <button onclick="rejectClaimPrompt('${claimId}')" class="bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded text-[11px] font-semibold">
-                    Reject
-                  </button>
-                ` : ``}
-                <button onclick="deleteSingleClaimRecord('${claimId}')" class="text-rose-600 hover:bg-rose-50 p-1.5 rounded text-xs" title="Delete Claim from Sheet">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-        `;
-      });
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+      }
     }
 
     function handleStudentFilterChange() {
@@ -428,8 +539,10 @@
     }
 
     function getFilteredStudents() {
-      const query = (document.getElementById("studentSearchInput").value || "").toLowerCase().trim();
-      const sortType = document.getElementById("studentSortSelect").value;
+      const searchEl = document.getElementById("studentSearchInput");
+      const sortEl = document.getElementById("studentSortSelect");
+      const query = searchEl ? searchEl.value.toLowerCase().trim() : "";
+      const sortType = sortEl ? sortEl.value : "name_asc";
 
       let list = [...rawStudentsData];
 
@@ -458,9 +571,12 @@
 
     function applyStudentFilters() {
       const list = getFilteredStudents();
-      document.getElementById("studentTotalBadge").innerText = `${list.length} Students`;
+      const badge = document.getElementById("studentTotalBadge");
+      if (badge) badge.innerText = `${list.length} Students`;
 
       const sTable = document.getElementById("adminStudentsTable");
+      if (!sTable) return;
+
       sTable.innerHTML = list.length ? "" : `<tr><td colspan="8" class="py-6 text-center text-slate-400 font-medium">Koi student match nahi hua.</td></tr>`;
       list.forEach(s => {
         sTable.innerHTML += `
@@ -469,7 +585,7 @@
               <span class="font-bold text-slate-900 block">${s.name}</span>
               <span class="text-slate-500 font-mono text-[11px]">${s.phone}</span>
             </td>
-            <td class="py-2.5 px-2 text-slate-500">${s.lastLogin !== 'Never' ? new Date(s.lastLogin).toLocaleString() : 'Never'}</td>
+            <td class="py-2.5 px-2 text-slate-500">${s.lastLogin !== 'Never' && s.lastLogin ? new Date(s.lastLogin).toLocaleString() : 'Never'}</td>
             <td class="py-2.5 px-2">
               <button onclick="filterExplorerByStudent('${s.phone}')" class="font-bold text-indigo-600 hover:underline flex items-center gap-1" title="Click to view leads in Explorer below">
                 <span>${s.totalLeads}</span>
@@ -477,8 +593,8 @@
               </button>
             </td>
             <td class="py-2.5 px-2 font-bold text-indigo-600">${s.conversions}</td>
-            <td class="py-2.5 px-2 font-bold text-slate-900">₹${s.totalEarned.toFixed(2)}</td>
-            <td class="py-2.5 px-2 font-bold text-emerald-600">₹${s.availableBalance.toFixed(2)}</td>
+            <td class="py-2.5 px-2 font-bold text-slate-900">₹${Number(s.totalEarned || 0).toFixed(2)}</td>
+            <td class="py-2.5 px-2 font-bold text-emerald-600">₹${Number(s.availableBalance || 0).toFixed(2)}</td>
             <td class="py-2.5 px-2 font-bold text-indigo-600">${s.customCommission !== null ? s.customCommission + '%' : 'Default'}</td>
             <td class="py-2.5 px-2 text-right">
               <div class="inline-flex items-center gap-1.5">
@@ -496,26 +612,34 @@
     }
 
     function filterExplorerByStudent(phone) {
-      document.getElementById("leadsExplorerSearch").value = phone;
-      renderLeadsExplorerTable();
-      document.getElementById("leadsExplorerSearch").scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const searchBox = document.getElementById("leadsExplorerSearch");
+      if (searchBox) {
+        searchBox.value = phone;
+        renderLeadsExplorerTable();
+        searchBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     }
 
     function renderLeadsExplorerTable() {
-      const query = (document.getElementById("leadsExplorerSearch").value || "").toLowerCase().trim();
+      const searchBox = document.getElementById("leadsExplorerSearch");
+      const query = searchBox ? searchBox.value.toLowerCase().trim() : "";
       const tbody = document.getElementById("leadsExplorerTableBody");
+      if (!tbody) return;
 
       let allLeads = [];
       rawStudentsData.forEach(s => {
-        const studentCleanPhone = s.phone.replace(/\D/g, "");
+        const studentCleanPhone = String(s.phone || "").replace(/\D/g, "");
         const studentName = s.name || "Student";
-        const localCached = JSON.parse(localStorage.getItem("local_leads_" + studentCleanPhone) || "[]");
+        let localCached = [];
+        try {
+          localCached = JSON.parse(localStorage.getItem("local_leads_" + studentCleanPhone) || "[]");
+        } catch(e) {}
 
         localCached.forEach(l => {
           allLeads.push({
             studentName: studentName,
             studentPhone: studentCleanPhone,
-            buyerPhone: (l.buyerPhone || "").replace(/\D/g, ""),
+            buyerPhone: String(l.buyerPhone || "").replace(/\D/g, ""),
             courseId: l.courseId || "General",
             status: "Captured"
           });
@@ -528,11 +652,12 @@
           l.studentName.toLowerCase().includes(query) ||
           l.studentPhone.includes(query) ||
           l.buyerPhone.includes(query) ||
-          l.courseId.toLowerCase().includes(query)
+          String(l.courseId).toLowerCase().includes(query)
         );
       }
 
-      document.getElementById("explorerTotalBadge").innerText = `${filtered.length} Leads`;
+      const badge = document.getElementById("explorerTotalBadge");
+      if (badge) badge.innerText = `${filtered.length} Leads`;
 
       if (filtered.length === 0) {
         tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 font-medium">${query ? 'Koi lead match nahi hui is search par.' : 'Abhi koi new lead capture nahi hui hai.'}</td></tr>`;
@@ -565,7 +690,7 @@
       const paidMap = {};
       const pendingMap = {};
       currentClaimsList.forEach(cl => {
-        const phone = (cl[1] || "").toString().trim().replace(/\D/g, "");
+        const phone = String(cl[1] || "").trim().replace(/\D/g, "");
         const amt = parseFloat(cl[2]) || 0;
         const status = cl[6];
         if (status === "Paid" || status === "Approved") {
@@ -596,23 +721,23 @@
       csvRows.push(headers.join(","));
 
       list.forEach(s => {
-        const p = s.phone.replace(/\D/g, "");
-        const totalPaid = (paidMap[p] || 0).toFixed(2);
-        const totalPending = (pendingMap[p] || 0).toFixed(2);
+        const p = String(s.phone || "").replace(/\D/g, "");
+        const totalPaid = Number(paidMap[p] || 0).toFixed(2);
+        const totalPending = Number(pendingMap[p] || 0).toFixed(2);
 
         const row = [
-          `"${(s.name || '').replace(/"/g, '""')}"`,
+          `"${String(s.name || '').replace(/"/g, '""')}"`,
           `"${s.phone}"`,
-          `"${(s.email || '').replace(/"/g, '""')}"`,
-          `"${(s.upi || '').replace(/"/g, '""')}"`,
-          `"${(s.bank || '').replace(/"/g, '""')}"`,
-          `"${s.lastLogin !== 'Never' ? new Date(s.lastLogin).toLocaleString() : 'Never'}"`,
+          `"${String(s.email || '').replace(/"/g, '""')}"`,
+          `"${String(s.upi || '').replace(/"/g, '""')}"`,
+          `"${String(s.bank || '').replace(/"/g, '""')}"`,
+          `"${s.lastLogin !== 'Never' && s.lastLogin ? new Date(s.lastLogin).toLocaleString() : 'Never'}"`,
           s.totalLeads,
           s.conversions,
-          s.totalEarned.toFixed(2),
+          Number(s.totalEarned || 0).toFixed(2),
           totalPaid,
           totalPending,
-          s.availableBalance.toFixed(2),
+          Number(s.availableBalance || 0).toFixed(2),
           s.customCommission !== null ? s.customCommission : "Default"
         ];
         csvRows.push(row.join(","));
@@ -630,86 +755,103 @@
 
     function renderCharts(students) {
       const topStudents = [...students].sort((a, b) => b.totalEarned - a.totalEarned).slice(0, 6);
-      const labels = topStudents.map(s => s.name.split(" ")[0]);
+      const labels = topStudents.map(s => (s.name || "Student").split(" ")[0]);
       const earnings = topStudents.map(s => s.totalEarned);
       const conversions = topStudents.map(s => s.conversions);
 
       let totalLeads = 0;
       let totalConversions = 0;
       students.forEach(s => {
-        totalLeads += s.totalLeads;
-        totalConversions += s.conversions;
+        totalLeads += Number(s.totalLeads || 0);
+        totalConversions += Number(s.conversions || 0);
       });
 
-      const ctxBar = document.getElementById("affiliatesChart").getContext("2d");
-      if (barChartInstance) barChartInstance.destroy();
-      barChartInstance = new Chart(ctxBar, {
-        type: "bar",
-        data: {
-          labels: labels.length ? labels : ["No data"],
-          datasets: [
-            {
-              label: "Commission Earned (₹)",
-              data: earnings.length ? earnings : [0],
-              backgroundColor: "rgba(79, 70, 229, 0.8)",
-              borderRadius: 6
-            },
-            {
-              label: "Sales Converted",
-              data: conversions.length ? conversions : [0],
-              backgroundColor: "rgba(16, 185, 129, 0.8)",
-              borderRadius: 6
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: { y: { beginAtZero: true } }
-        }
-      });
+      const barEl = document.getElementById("affiliatesChart");
+      if (barEl) {
+        const ctxBar = barEl.getContext("2d");
+        if (barChartInstance) barChartInstance.destroy();
+        barChartInstance = new Chart(ctxBar, {
+          type: "bar",
+          data: {
+            labels: labels.length ? labels : ["No data"],
+            datasets: [
+              {
+                label: "Commission Earned (₹)",
+                data: earnings.length ? earnings : [0],
+                backgroundColor: "rgba(79, 70, 229, 0.8)",
+                borderRadius: 6
+              },
+              {
+                label: "Sales Converted",
+                data: conversions.length ? conversions : [0],
+                backgroundColor: "rgba(16, 185, 129, 0.8)",
+                borderRadius: 6
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true } }
+          }
+        });
+      }
 
       const unconverted = Math.max(0, totalLeads - totalConversions);
-      const ctxPie = document.getElementById("conversionPieChart").getContext("2d");
-      if (pieChartInstance) pieChartInstance.destroy();
-      pieChartInstance = new Chart(ctxPie, {
-        type: "doughnut",
-        data: {
-          labels: ["Converted Sales", "Unconverted Clicks"],
-          datasets: [{
-            data: [totalConversions, unconverted],
-            backgroundColor: ["#10b981", "#cbd5e1"]
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom' } }
-        }
-      });
+      const pieEl = document.getElementById("conversionPieChart");
+      if (pieEl) {
+        const ctxPie = pieEl.getContext("2d");
+        if (pieChartInstance) pieChartInstance.destroy();
+        pieChartInstance = new Chart(ctxPie, {
+          type: "doughnut",
+          data: {
+            labels: ["Converted Sales", "Unconverted Clicks"],
+            datasets: [{
+              data: [totalConversions, unconverted],
+              backgroundColor: ["#10b981", "#cbd5e1"]
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } }
+          }
+        });
+      }
 
       const rate = totalLeads > 0 ? ((totalConversions / totalLeads) * 100).toFixed(1) : 0;
-      document.getElementById("conversionRateLabel").innerText = `Overall Conversion: ${rate}% (${totalConversions} sales out of ${totalLeads} clicks)`;
+      const rateLabel = document.getElementById("conversionRateLabel");
+      if (rateLabel) {
+        rateLabel.innerText = `Overall Conversion: ${rate}% (${totalConversions} sales out of ${totalLeads} clicks)`;
+      }
     }
 
     function openOfferModal() {
-      document.getElementById("offerModal").classList.remove("hidden");
-      document.getElementById("offerModal").classList.add("flex");
+      const modal = document.getElementById("offerModal");
+      if (modal) {
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+      }
     }
 
     function closeOfferModal() {
-      document.getElementById("offerModal").classList.add("hidden");
-      document.getElementById("offerModal").classList.remove("flex");
+      const modal = document.getElementById("offerModal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
     }
 
     async function handleOfferSubmit(e) {
       e.preventDefault();
-      const text = document.getElementById("offerInputText").value.trim();
-      const comm = document.getElementById("offerCommPercent").value.trim();
-      const isActive = document.getElementById("offerActiveCheck").checked;
+      const text = document.getElementById("offerInputText")?.value.trim() || "";
+      const comm = document.getElementById("offerCommPercent")?.value.trim() || "";
+      const isActive = document.getElementById("offerActiveCheck")?.checked || false;
       const btn = document.getElementById("saveOfferBtn");
-      btn.innerText = "Saving...";
-      btn.disabled = true;
+      if (btn) {
+        btn.innerText = "Saving...";
+        btn.disabled = true;
+      }
 
       await fetch(SCRIPT_URL, {
         method: "POST",
@@ -723,36 +865,46 @@
       });
 
       alert("Live Offer updated!");
-      btn.innerText = "Update Live Offer";
-      btn.disabled = false;
+      if (btn) {
+        btn.innerText = "Update Live Offer";
+        btn.disabled = false;
+      }
       closeOfferModal();
       refreshDashboardData();
     }
 
     function openAddCourseModal() {
-      document.getElementById("addCourseModal").classList.remove("hidden");
-      document.getElementById("addCourseModal").classList.add("flex");
+      const modal = document.getElementById("addCourseModal");
+      if (modal) {
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+      }
     }
 
     function closeAddCourseModal() {
-      document.getElementById("addCourseModal").classList.add("hidden");
-      document.getElementById("addCourseModal").classList.remove("flex");
+      const modal = document.getElementById("addCourseModal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
     }
 
     async function handleAddCourseSubmit(e) {
       e.preventDefault();
       const payload = {
         action: "adminAddCourse",
-        courseId: document.getElementById("newCourseId").value.trim(),
-        title: document.getElementById("newCourseTitle").value.trim(),
-        imageUrl: document.getElementById("newCourseImg").value.trim(),
-        storeUrl: document.getElementById("newCourseUrl").value.trim(),
-        commission: parseFloat(document.getElementById("newCourseComm").value)
+        courseId: document.getElementById("newCourseId")?.value.trim() || "",
+        title: document.getElementById("newCourseTitle")?.value.trim() || "",
+        imageUrl: document.getElementById("newCourseImg")?.value.trim() || "",
+        storeUrl: document.getElementById("newCourseUrl")?.value.trim() || "",
+        commission: parseFloat(document.getElementById("newCourseComm")?.value || 10)
       };
 
       const btn = document.getElementById("saveCourseBtn");
-      btn.innerText = "Adding...";
-      btn.disabled = true;
+      if (btn) {
+        btn.innerText = "Adding...";
+        btn.disabled = true;
+      }
 
       await fetch(SCRIPT_URL, {
         method: "POST",
@@ -761,45 +913,61 @@
       });
 
       alert("Course added successfully!");
-      btn.innerText = "Save Course";
-      btn.disabled = false;
+      if (btn) {
+        btn.innerText = "Save Course";
+        btn.disabled = false;
+      }
       closeAddCourseModal();
       refreshDashboardData();
     }
 
     function openEditCourseModal(courseId) {
-      const course = currentCoursesList.find(c => c.courseId.toString() === courseId.toString());
+      const course = currentCoursesList.find(c => String(c.courseId) === String(courseId));
       if (!course) return;
 
-      document.getElementById("editCourseId").value = course.courseId;
-      document.getElementById("editCourseTitle").value = course.title;
-      document.getElementById("editCourseUrl").value = course.storeUrl;
-      document.getElementById("editCourseImg").value = course.imageUrl || "";
-      document.getElementById("editCourseComm").value = course.defaultCommission;
+      const idEl = document.getElementById("editCourseId");
+      const titleEl = document.getElementById("editCourseTitle");
+      const urlEl = document.getElementById("editCourseUrl");
+      const imgEl = document.getElementById("editCourseImg");
+      const commEl = document.getElementById("editCourseComm");
 
-      document.getElementById("editCourseModal").classList.remove("hidden");
-      document.getElementById("editCourseModal").classList.add("flex");
+      if (idEl) idEl.value = course.courseId;
+      if (titleEl) titleEl.value = course.title;
+      if (urlEl) urlEl.value = course.storeUrl;
+      if (imgEl) imgEl.value = course.imageUrl || "";
+      if (commEl) commEl.value = course.defaultCommission;
+
+      const modal = document.getElementById("editCourseModal");
+      if (modal) {
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+      }
     }
 
     function closeEditCourseModal() {
-      document.getElementById("editCourseModal").classList.add("hidden");
-      document.getElementById("editCourseModal").classList.remove("flex");
+      const modal = document.getElementById("editCourseModal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
     }
 
     async function handleEditCourseSubmit(e) {
       e.preventDefault();
       const payload = {
         action: "adminEditCourse",
-        courseId: document.getElementById("editCourseId").value.trim(),
-        title: document.getElementById("editCourseTitle").value.trim(),
-        imageUrl: document.getElementById("editCourseImg").value.trim(),
-        storeUrl: document.getElementById("editCourseUrl").value.trim(),
-        commission: parseFloat(document.getElementById("editCourseComm").value)
+        courseId: document.getElementById("editCourseId")?.value.trim() || "",
+        title: document.getElementById("editCourseTitle")?.value.trim() || "",
+        imageUrl: document.getElementById("editCourseImg")?.value.trim() || "",
+        storeUrl: document.getElementById("editCourseUrl")?.value.trim() || "",
+        commission: parseFloat(document.getElementById("editCourseComm")?.value || 10)
       };
 
       const btn = document.getElementById("updateCourseBtn");
-      btn.innerText = "Updating...";
-      btn.disabled = true;
+      if (btn) {
+        btn.innerText = "Updating...";
+        btn.disabled = true;
+      }
 
       await fetch(SCRIPT_URL, {
         method: "POST",
@@ -808,8 +976,10 @@
       });
 
       alert("Course details updated successfully!");
-      btn.innerText = "Update Course Details";
-      btn.disabled = false;
+      if (btn) {
+        btn.innerText = "Update Course Details";
+        btn.disabled = false;
+      }
       closeEditCourseModal();
       refreshDashboardData();
     }
