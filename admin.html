@@ -62,7 +62,7 @@
         </div>
         <div class="flex flex-wrap gap-2">
           <button onclick="downloadReportCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-lg shadow flex items-center gap-1.5 transition">
-            <i class="fa-solid fa-file-csv text-sm"></i> Download Report (CSV)
+            <i class="fa-solid fa-file-csv text-sm"></i> Download Students Report (CSV)
           </button>
           <button onclick="refreshDashboardData()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-3 py-2 rounded-lg shadow flex items-center gap-1.5">
             <i class="fa-solid fa-arrows-rotate" id="syncIcon"></i> Force Sync
@@ -198,7 +198,7 @@
         </div>
       </div>
 
-      <!-- Live Referral Leads Explorer -->
+      <!-- Live Referral Leads Explorer (With Live Export Leads CSV Button) -->
       <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-2 border-b border-slate-100">
           <div>
@@ -207,15 +207,20 @@
               <h3 class="font-bold text-sm text-slate-900">Live Referral Leads Explorer</h3>
               <span id="explorerTotalBadge" class="bg-emerald-50 text-emerald-700 text-[11px] font-bold px-2 py-0.5 rounded-full">0 Total Leads</span>
             </div>
-            <p class="text-xs text-slate-500 mt-0.5">Kisi bhi affiliate student ka naam ya number search karein unke dwara laye gaye sabhi buyers ke numbers dekhne ke liye.</p>
+            <p class="text-xs text-slate-500 mt-0.5">Kisi bhi affiliate student ka naam ya number search karein ya direct saare buyer numbers export karein.</p>
           </div>
 
-          <div class="relative">
-            <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-400">
-              <i class="fa-solid fa-search"></i>
-            </span>
-            <input type="text" id="leadsExplorerSearch" oninput="renderLeadsExplorerTable()" placeholder="Search Student Name / Mobile / Buyer..."
-              class="pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 w-56 sm:w-72 text-xs" />
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="downloadLeadsCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-download"></i> Export Leads (CSV)
+            </button>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-400">
+                <i class="fa-solid fa-search"></i>
+              </span>
+              <input type="text" id="leadsExplorerSearch" oninput="renderLeadsExplorerTable()" placeholder="Search Student Name / Mobile / Buyer..."
+                class="pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 w-52 sm:w-64 text-xs" />
+            </div>
           </div>
         </div>
 
@@ -227,11 +232,12 @@
                 <th class="py-2.5 px-2">Student Mobile</th>
                 <th class="py-2.5 px-2">Buyer Mobile Number</th>
                 <th class="py-2.5 px-2">Target Course ID</th>
+                <th class="py-2.5 px-2">Date / Time</th>
                 <th class="py-2.5 px-2">Lead Status</th>
               </tr>
             </thead>
             <tbody id="leadsExplorerTableBody" class="divide-y divide-slate-100">
-              <tr><td colspan="5" class="py-6 text-center text-slate-400 font-medium">Loading leads...</td></tr>
+              <tr><td colspan="6" class="py-6 text-center text-slate-400 font-medium">Loading leads...</td></tr>
             </tbody>
           </table>
         </div>
@@ -342,6 +348,7 @@
     let rawStudentsData = [];
     let currentCoursesList = [];
     let currentClaimsList = [];
+    let rawGlobalLeads = []; // Live Raw Leads directly from Sheet
     let barChartInstance = null;
     let pieChartInstance = null;
     let isAdminSyncing = false;
@@ -439,8 +446,8 @@
       rawStudentsData = data.students || [];
       currentCoursesList = data.courses || [];
       currentClaimsList = data.claims || [];
+      rawGlobalLeads = data.rawLeads || []; // Leads array from Google Sheet
 
-      // SAFE ASSIGNMENT (Fixes Cannot set properties of null)
       const offerInput = document.getElementById("offerInputText");
       const commInput = document.getElementById("offerCommPercent");
       const activeCheck = document.getElementById("offerActiveCheck");
@@ -620,47 +627,55 @@
       }
     }
 
-    function renderLeadsExplorerTable() {
+    // Helper map of student phones to names
+    function getStudentNameMap() {
+      const map = {};
+      rawStudentsData.forEach(s => {
+        map[s.phone.replace(/\D/g, "")] = s.name || "Student";
+      });
+      return map;
+    }
+
+    // Filtered Global Leads List
+    function getFilteredGlobalLeads() {
       const searchBox = document.getElementById("leadsExplorerSearch");
       const query = searchBox ? searchBox.value.toLowerCase().trim() : "";
-      const tbody = document.getElementById("leadsExplorerTableBody");
-      if (!tbody) return;
+      const studentMap = getStudentNameMap();
 
-      let allLeads = [];
-      rawStudentsData.forEach(s => {
-        const studentCleanPhone = String(s.phone || "").replace(/\D/g, "");
-        const studentName = s.name || "Student";
-        let localCached = [];
-        try {
-          localCached = JSON.parse(localStorage.getItem("local_leads_" + studentCleanPhone) || "[]");
-        } catch(e) {}
-
-        localCached.forEach(l => {
-          allLeads.push({
-            studentName: studentName,
-            studentPhone: studentCleanPhone,
-            buyerPhone: String(l.buyerPhone || "").replace(/\D/g, ""),
-            courseId: l.courseId || "General",
-            status: "Captured"
-          });
-        });
+      let list = rawGlobalLeads.map(l => {
+        const refClean = String(l.referrerPhone || "").replace(/\D/g, "");
+        const studentName = studentMap[refClean] || "Student";
+        return {
+          studentName: studentName,
+          studentPhone: refClean,
+          buyerPhone: String(l.buyerPhone || "").replace(/\D/g, ""),
+          courseId: l.courseId || "General",
+          date: l.timestamp || "",
+          status: "Captured"
+        };
       });
 
-      let filtered = allLeads;
       if (query) {
-        filtered = allLeads.filter(l => 
+        list = list.filter(l => 
           l.studentName.toLowerCase().includes(query) ||
           l.studentPhone.includes(query) ||
           l.buyerPhone.includes(query) ||
           String(l.courseId).toLowerCase().includes(query)
         );
       }
+      return list;
+    }
 
+    function renderLeadsExplorerTable() {
+      const tbody = document.getElementById("leadsExplorerTableBody");
+      if (!tbody) return;
+
+      const filtered = getFilteredGlobalLeads();
       const badge = document.getElementById("explorerTotalBadge");
       if (badge) badge.innerText = `${filtered.length} Leads`;
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 font-medium">${query ? 'Koi lead match nahi hui is search par.' : 'Abhi koi new lead capture nahi hui hai.'}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-400 font-medium">Koi lead match nahi hui ya sheet mein lead data khali hai.</td></tr>`;
         return;
       }
 
@@ -672,12 +687,55 @@
             <td class="py-2.5 px-2 font-mono text-slate-500">${l.studentPhone}</td>
             <td class="py-2.5 px-2 font-mono font-bold text-emerald-600">${l.buyerPhone}</td>
             <td class="py-2.5 px-2 font-mono text-slate-600">${l.courseId}</td>
+            <td class="py-2.5 px-2 text-slate-500">${l.date ? new Date(l.date).toLocaleString() : '-'}</td>
             <td class="py-2.5 px-2">
               <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700">Captured / Clicked</span>
             </td>
           </tr>
         `;
       });
+    }
+
+    // DOWNLOAD LEADS DIRECTLY AS CSV
+    function downloadLeadsCSV() {
+      const list = getFilteredGlobalLeads();
+      if (!list || list.length === 0) {
+        alert("Koi lead data available nahi hai download karne ke liye.");
+        return;
+      }
+
+      const headers = [
+        "Affiliate Student Name",
+        "Student Phone Number",
+        "Buyer Mobile Number",
+        "Target Course ID",
+        "Registration Timestamp",
+        "Lead Status"
+      ];
+
+      const csvRows = [];
+      csvRows.push(headers.join(","));
+
+      list.forEach(l => {
+        const row = [
+          `"${String(l.studentName || '').replace(/"/g, '""')}"`,
+          `"${l.studentPhone}"`,
+          `"${l.buyerPhone}"`,
+          `"${l.courseId}"`,
+          `"${l.date ? new Date(l.date).toLocaleString() : ''}"`,
+          `"Captured"`
+        ];
+        csvRows.push(row.join(","));
+      });
+
+      const csvString = "data:text/csv;charset=utf-8," + encodeURIComponent(csvRows.join("\n"));
+      const downloadAnchor = document.createElement("a");
+      downloadAnchor.setAttribute("href", csvString);
+      const filename = `Captured_Referral_Leads_${new Date().toISOString().slice(0, 10)}.csv`;
+      downloadAnchor.setAttribute("download", filename);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
     }
 
     function downloadReportCSV() {
@@ -746,7 +804,7 @@
       const csvString = "data:text/csv;charset=utf-8," + encodeURIComponent(csvRows.join("\n"));
       const downloadAnchor = document.createElement("a");
       downloadAnchor.setAttribute("href", csvString);
-      const filename = `Referral_Report_${new Date().toISOString().slice(0, 10)}.csv`;
+      const filename = `Referral_Students_Report_${new Date().toISOString().slice(0, 10)}.csv`;
       downloadAnchor.setAttribute("download", filename);
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();

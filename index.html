@@ -13,7 +13,7 @@
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAKUIZI7zy6Cypfb9D4VgRyONyQmxUPh_0n9THdfJ96lpZDnrDX3Qv7rUEUTuHW8XX/exec";
   </script>
 
-  <!-- 1. BUYER LEAD CAPTURE SCREEN (When Referral Link is Opened) -->
+  <!-- 1. BUYER LEAD CAPTURE SCREEN -->
   <div id="buyerCaptureSection" class="hidden min-h-screen flex items-center justify-center p-4 bg-slate-100">
     <div class="bg-white p-7 rounded-2xl shadow-xl max-w-sm w-full border border-slate-200 text-center">
       <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl font-bold shadow-inner">
@@ -184,10 +184,10 @@
         <div id="coursesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
       </div>
 
-      <!-- 3 Tables: Leads Captured, Sales Log, Payout Requests -->
+      <!-- 3 Tables: Leads Captured (Direct From Sheet), Sales Log, Payout Requests -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
         
-        <!-- Table 1: Captured Leads (Unmasked Numbers) -->
+        <!-- Table 1: Captured Leads Directly from Sheet -->
         <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
           <div class="flex justify-between items-center mb-3">
             <h3 class="font-bold text-sm text-slate-900"><i class="fa-solid fa-user-check text-blue-500 mr-2"></i>Captured Leads</h3>
@@ -209,7 +209,7 @@
           </div>
         </div>
 
-        <!-- Table 2: Sales Attribution Log (Unmasked Numbers) -->
+        <!-- Table 2: Sales Attribution Log -->
         <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
           <h3 class="font-bold text-sm text-slate-900 mb-3"><i class="fa-solid fa-receipt text-indigo-500 mr-2"></i>Sales Attribution Log</h3>
           <div class="overflow-x-auto max-h-60 overflow-y-auto text-xs">
@@ -328,7 +328,6 @@
     let isStudentSyncing = false;
     let studentSyncInterval = null;
 
-    // Detect referral parameters
     const urlParams = new URLSearchParams(window.location.search);
     const targetCourseId = urlParams.get("courseId");
     const targetReferrerPhone = urlParams.get("ref");
@@ -349,12 +348,6 @@
       const btn = document.getElementById("buyerProceedBtn");
       btn.disabled = true;
       btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Redirecting...`;
-
-      try {
-        const storedLeads = JSON.parse(localStorage.getItem("local_leads_" + targetReferrerPhone) || "[]");
-        storedLeads.unshift({ buyerPhone: bPhone, courseId: targetCourseId, date: new Date().toISOString() });
-        localStorage.setItem("local_leads_" + targetReferrerPhone, JSON.stringify(storedLeads.slice(0, 50)));
-      } catch(e) {}
 
       try {
         await fetch(SCRIPT_URL, {
@@ -539,8 +532,8 @@
       document.getElementById("navUserName").innerText = `${studentData.user.name || 'Student'} (${activePhone})`;
       document.getElementById("statTotalReferrals").innerText = studentData.stats.totalReferrals;
       document.getElementById("statTotalSales").innerText = studentData.stats.totalSalesCount;
-      document.getElementById("statTotalEarnings").innerText = `₹${studentData.stats.totalEarnings.toFixed(2)}`;
-      document.getElementById("statAvailableBalance").innerText = `₹${studentData.stats.availableBalance.toFixed(2)}`;
+      document.getElementById("statTotalEarnings").innerText = `₹${Number(studentData.stats.totalEarnings || 0).toFixed(2)}`;
+      document.getElementById("statAvailableBalance").innerText = `₹${Number(studentData.stats.availableBalance || 0).toFixed(2)}`;
 
       const grid = document.getElementById("coursesGrid");
       grid.innerHTML = "";
@@ -583,43 +576,33 @@
         grid.appendChild(card);
       });
 
-      // RENDER CAPTURED LEADS DIRECTORY (FULL UNMASKED NUMBERS)
+      // 1. RENDER CAPTURED LEADS (DIRECT FROM GOOGLE SHEET - NEVER DISAPPEARS)
       const leadsBody = document.getElementById("leadsTableBody");
-      const localLeads = JSON.parse(localStorage.getItem("local_leads_" + activePhone) || "[]");
       const convertedBuyerPhones = new Set((studentData.sales || []).map(s => s.buyerPhone.replace(/\D/g, "")));
-      
-      let allLeads = [...localLeads];
-      (studentData.sales || []).forEach(s => {
-        const clean = s.buyerPhone.replace(/\D/g, "");
-        if (clean && !allLeads.some(l => l.buyerPhone === clean)) {
-          allLeads.push({ buyerPhone: clean, courseId: s.courseName || s.courseId, date: s.date });
-        }
-      });
+      const rawLeads = studentData.capturedLeads || [];
 
-      document.getElementById("leadsCountBadge").innerText = allLeads.length;
-      leadsBody.innerHTML = allLeads.length ? "" : `<tr><td colspan="3" class="py-4 text-center text-slate-400">No leads captured yet.</td></tr>`;
-      allLeads.forEach(l => {
-        const isConverted = convertedBuyerPhones.has(l.buyerPhone.replace(/\D/g, ""));
-        // FULL NUMBER DISPLAY (NO MASKING)
-        const fullNumber = l.buyerPhone.replace(/\D/g, "");
+      document.getElementById("leadsCountBadge").innerText = rawLeads.length;
+      leadsBody.innerHTML = rawLeads.length ? "" : `<tr><td colspan="3" class="py-4 text-center text-slate-400">No leads captured yet.</td></tr>`;
+      rawLeads.forEach(l => {
+        const fullNumber = String(l.buyerPhone || "").replace(/\D/g, "");
+        const isConverted = convertedBuyerPhones.has(fullNumber);
         leadsBody.innerHTML += `
           <tr>
             <td class="py-2.5 px-2 font-mono font-bold text-slate-900">${fullNumber}</td>
             <td class="py-2.5 px-2 font-mono text-[11px] text-slate-500">${l.courseId}</td>
             <td class="py-2.5 px-2">
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isConverted ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}">
-                ${isConverted ? 'Converted' : 'Clicked'}
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isConverted ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}">
+                ${isConverted ? 'Converted' : 'Captured'}
               </span>
             </td>
           </tr>
         `;
       });
 
-      // RENDER SALES TABLE (FULL UNMASKED NUMBERS)
+      // 2. RENDER SALES TABLE (FULL UNMASKED NUMBERS)
       const sBody = document.getElementById("salesTableBody");
       sBody.innerHTML = studentData.sales.length ? "" : `<tr><td colspan="3" class="py-4 text-center text-slate-400">No successful sales yet.</td></tr>`;
       studentData.sales.forEach(s => {
-        // FULL BUYER NUMBER
         const buyerFullNum = s.buyerPhone.replace(/\D/g, "");
         sBody.innerHTML += `
           <tr>
@@ -632,14 +615,14 @@
               <span class="text-[10px] text-slate-500 font-bold">Paid: ₹${s.amountPaid}</span>
             </td>
             <td class="py-2.5 px-2 font-bold text-emerald-600">
-              ₹${s.earning.toFixed(2)}
+              ₹${Number(s.earning || 0).toFixed(2)}
               <span class="block text-[10px] text-slate-400 font-normal">(${s.rate}%)</span>
             </td>
           </tr>
         `;
       });
 
-      // RENDER CLAIMS TABLE
+      // 3. RENDER CLAIMS TABLE
       const cBody = document.getElementById("claimsTableBody");
       cBody.innerHTML = studentData.claims.length ? "" : `<tr><td colspan="3" class="py-4 text-center text-slate-400">No payout claims yet.</td></tr>`;
       studentData.claims.forEach(c => {
@@ -709,7 +692,7 @@
 
     function openClaimModal() {
       const avail = studentData.stats.availableBalance || 0;
-      document.getElementById("claimAvailLabel").innerText = avail.toFixed(2);
+      document.getElementById("claimAvailLabel").innerText = Number(avail).toFixed(2);
       
       const input = document.getElementById("claimAmountInput");
       input.value = avail;
@@ -756,7 +739,7 @@
       }
 
       if (amt > avail) {
-        alert(`Aapke paas sirf ₹${avail.toFixed(2)} available hain. Aap isse zyada claim nahi kar sakte.`);
+        alert(`Aapke paas sirf ₹${Number(avail).toFixed(2)} available hain. Aap isse zyada claim nahi kar sakte.`);
         return;
       }
 
