@@ -147,9 +147,11 @@
     </header>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+      
+      <!-- Metrics Overview Cards -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <p class="text-xs text-slate-500 font-medium">Total Clicks/Leads</p>
+          <p class="text-xs text-slate-500 font-medium">Total Registered Leads</p>
           <p id="statTotalReferrals" class="text-2xl font-black text-slate-900 mt-1">0</p>
         </div>
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
@@ -173,6 +175,7 @@
         </div>
       </div>
 
+      <!-- Active Courses -->
       <div class="space-y-4">
         <div class="flex justify-between items-center">
           <h2 class="text-lg font-bold text-slate-900">Your Referral Courses</h2>
@@ -181,23 +184,51 @@
         <div id="coursesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
+      <!-- 3 Tables: Leads Captured, Sales Log, Payout Requests -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
+        
+        <!-- Table 1: Captured Leads (Unmasked Numbers) -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="font-bold text-sm text-slate-900"><i class="fa-solid fa-user-check text-blue-500 mr-2"></i>Captured Leads</h3>
+            <span id="leadsCountBadge" class="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full">0</span>
+          </div>
+          <div class="overflow-x-auto max-h-60 overflow-y-auto text-xs">
+            <table class="w-full text-left">
+              <thead class="bg-slate-50 text-slate-500 border-b">
+                <tr>
+                  <th class="py-2 px-2">Buyer Mobile</th>
+                  <th class="py-2 px-2">Course ID</th>
+                  <th class="py-2 px-2">Status</th>
+                </tr>
+              </thead>
+              <tbody id="leadsTableBody" class="divide-y divide-slate-100">
+                <tr><td colspan="3" class="py-4 text-center text-slate-400">No leads captured yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Table 2: Sales Attribution Log (Unmasked Numbers) -->
         <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
           <h3 class="font-bold text-sm text-slate-900 mb-3"><i class="fa-solid fa-receipt text-indigo-500 mr-2"></i>Sales Attribution Log</h3>
           <div class="overflow-x-auto max-h-60 overflow-y-auto text-xs">
             <table class="w-full text-left">
               <thead class="bg-slate-50 text-slate-500 border-b">
                 <tr>
-                  <th class="py-2 px-2">Course & Date</th>
-                  <th class="py-2 px-2">Buyer Detail</th>
-                  <th class="py-2 px-2">Commission Earned</th>
+                  <th class="py-2 px-2">Course</th>
+                  <th class="py-2 px-2">Buyer Mobile</th>
+                  <th class="py-2 px-2">Earned</th>
                 </tr>
               </thead>
-              <tbody id="salesTableBody" class="divide-y divide-slate-100"></tbody>
+              <tbody id="salesTableBody" class="divide-y divide-slate-100">
+                <tr><td colspan="3" class="py-4 text-center text-slate-400">No sales recorded yet.</td></tr>
+              </tbody>
             </table>
           </div>
         </div>
 
+        <!-- Table 3: Payout Requests -->
         <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
           <h3 class="font-bold text-sm text-slate-900 mb-3"><i class="fa-solid fa-building-columns text-emerald-500 mr-2"></i>Payout Requests</h3>
           <div class="overflow-x-auto max-h-60 overflow-y-auto text-xs">
@@ -207,13 +238,15 @@
                   <th class="py-2 px-2">Claim ID</th>
                   <th class="py-2 px-2">Amount</th>
                   <th class="py-2 px-2">Status</th>
-                  <th class="py-2 px-2">Ref / UTR</th>
                 </tr>
               </thead>
-              <tbody id="claimsTableBody" class="divide-y divide-slate-100"></tbody>
+              <tbody id="claimsTableBody" class="divide-y divide-slate-100">
+                <tr><td colspan="3" class="py-4 text-center text-slate-400">No payout claims yet.</td></tr>
+              </tbody>
             </table>
           </div>
         </div>
+
       </div>
 
     </main>
@@ -300,7 +333,6 @@
     const targetCourseId = urlParams.get("courseId");
     const targetReferrerPhone = urlParams.get("ref");
 
-    // Check if this is a buyer clicking a referral link
     if (targetCourseId && targetReferrerPhone) {
       document.getElementById("loginSection").classList.add("hidden");
       document.getElementById("buyerCaptureSection").classList.remove("hidden");
@@ -318,7 +350,12 @@
       btn.disabled = true;
       btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Redirecting...`;
 
-      // Record buyer's real phone with referrer
+      try {
+        const storedLeads = JSON.parse(localStorage.getItem("local_leads_" + targetReferrerPhone) || "[]");
+        storedLeads.unshift({ buyerPhone: bPhone, courseId: targetCourseId, date: new Date().toISOString() });
+        localStorage.setItem("local_leads_" + targetReferrerPhone, JSON.stringify(storedLeads.slice(0, 50)));
+      } catch(e) {}
+
       try {
         await fetch(SCRIPT_URL, {
           method: "POST",
@@ -332,7 +369,6 @@
         });
       } catch (err) {}
 
-      // Forward directly to Classplus Course Store
       setTimeout(() => {
         window.location.replace(`https://obqype.courses.store/${targetCourseId}`);
       }, 350);
@@ -547,9 +583,44 @@
         grid.appendChild(card);
       });
 
+      // RENDER CAPTURED LEADS DIRECTORY (FULL UNMASKED NUMBERS)
+      const leadsBody = document.getElementById("leadsTableBody");
+      const localLeads = JSON.parse(localStorage.getItem("local_leads_" + activePhone) || "[]");
+      const convertedBuyerPhones = new Set((studentData.sales || []).map(s => s.buyerPhone.replace(/\D/g, "")));
+      
+      let allLeads = [...localLeads];
+      (studentData.sales || []).forEach(s => {
+        const clean = s.buyerPhone.replace(/\D/g, "");
+        if (clean && !allLeads.some(l => l.buyerPhone === clean)) {
+          allLeads.push({ buyerPhone: clean, courseId: s.courseName || s.courseId, date: s.date });
+        }
+      });
+
+      document.getElementById("leadsCountBadge").innerText = allLeads.length;
+      leadsBody.innerHTML = allLeads.length ? "" : `<tr><td colspan="3" class="py-4 text-center text-slate-400">No leads captured yet.</td></tr>`;
+      allLeads.forEach(l => {
+        const isConverted = convertedBuyerPhones.has(l.buyerPhone.replace(/\D/g, ""));
+        // FULL NUMBER DISPLAY (NO MASKING)
+        const fullNumber = l.buyerPhone.replace(/\D/g, "");
+        leadsBody.innerHTML += `
+          <tr>
+            <td class="py-2.5 px-2 font-mono font-bold text-slate-900">${fullNumber}</td>
+            <td class="py-2.5 px-2 font-mono text-[11px] text-slate-500">${l.courseId}</td>
+            <td class="py-2.5 px-2">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isConverted ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}">
+                ${isConverted ? 'Converted' : 'Clicked'}
+              </span>
+            </td>
+          </tr>
+        `;
+      });
+
+      // RENDER SALES TABLE (FULL UNMASKED NUMBERS)
       const sBody = document.getElementById("salesTableBody");
-      sBody.innerHTML = studentData.sales.length ? "" : `<tr><td colspan="3" class="py-4 text-center text-slate-400">No referral sales recorded yet.</td></tr>`;
+      sBody.innerHTML = studentData.sales.length ? "" : `<tr><td colspan="3" class="py-4 text-center text-slate-400">No successful sales yet.</td></tr>`;
       studentData.sales.forEach(s => {
+        // FULL BUYER NUMBER
+        const buyerFullNum = s.buyerPhone.replace(/\D/g, "");
         sBody.innerHTML += `
           <tr>
             <td class="py-2.5 px-2">
@@ -557,7 +628,7 @@
               <span class="text-[10px] text-slate-400 font-mono">${s.date ? new Date(s.date).toLocaleDateString() : ''}</span>
             </td>
             <td class="py-2.5 px-2">
-              <span class="font-semibold block text-slate-800">${s.buyerPhone}</span>
+              <span class="font-bold block text-slate-900 font-mono">${buyerFullNum}</span>
               <span class="text-[10px] text-slate-500 font-bold">Paid: ₹${s.amountPaid}</span>
             </td>
             <td class="py-2.5 px-2 font-bold text-emerald-600">
@@ -568,8 +639,9 @@
         `;
       });
 
+      // RENDER CLAIMS TABLE
       const cBody = document.getElementById("claimsTableBody");
-      cBody.innerHTML = studentData.claims.length ? "" : `<tr><td colspan="4" class="py-4 text-center text-slate-400">No payout claims yet.</td></tr>`;
+      cBody.innerHTML = studentData.claims.length ? "" : `<tr><td colspan="3" class="py-4 text-center text-slate-400">No payout claims yet.</td></tr>`;
       studentData.claims.forEach(c => {
         const isPaid = c.status === "Paid" || c.status === "Approved";
         const isRejected = c.status === "Rejected";
@@ -579,7 +651,6 @@
             <td class="py-2.5 px-2 font-mono font-medium">${c.claimId}</td>
             <td class="py-2.5 px-2 font-bold">₹${c.amount}</td>
             <td class="py-2.5 px-2"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${color}">${c.status}</span></td>
-            <td class="py-2.5 px-2 font-mono text-[11px] text-slate-600">${c.txRef || (isPaid ? 'Credited' : 'Processing')}</td>
           </tr>
         `;
       });
@@ -734,7 +805,6 @@
     }
 
     window.addEventListener("DOMContentLoaded", () => {
-      // Don't auto-login if opening a referral link as a buyer
       if (targetCourseId && targetReferrerPhone) return;
 
       const savedPhone = localStorage.getItem("student_auth_phone");

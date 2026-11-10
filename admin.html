@@ -198,104 +198,47 @@
         </div>
       </div>
 
+      <!-- 4. NEW DEDICATED SECTION: LIVE REFERRAL LEADS EXPLORER -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-2 border-b border-slate-100">
+          <div>
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-address-book text-emerald-600 text-base"></i>
+              <h3 class="font-bold text-sm text-slate-900">Live Referral Leads Explorer</h3>
+              <span id="explorerTotalBadge" class="bg-emerald-50 text-emerald-700 text-[11px] font-bold px-2 py-0.5 rounded-full">0 Total Leads</span>
+            </div>
+            <p class="text-xs text-slate-500 mt-0.5">Kisi bhi affiliate student ka naam ya number search karein unke dwara laye gaye sabhi buyers ke numbers dekhne ke liye.</p>
+          </div>
+
+          <!-- Leads Search Box -->
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-400">
+              <i class="fa-solid fa-search"></i>
+            </span>
+            <input type="text" id="leadsExplorerSearch" oninput="renderLeadsExplorerTable()" placeholder="Search Student Name / Mobile / Buyer..."
+              class="pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 w-56 sm:w-72 text-xs" />
+          </div>
+        </div>
+
+        <div class="overflow-x-auto text-xs max-h-80 overflow-y-auto">
+          <table class="w-full text-left">
+            <thead class="bg-slate-50 text-slate-500 sticky top-0 border-b z-10">
+              <tr>
+                <th class="py-2.5 px-2">Affiliate Student</th>
+                <th class="py-2.5 px-2">Student Mobile</th>
+                <th class="py-2.5 px-2">Buyer Mobile Number</th>
+                <th class="py-2.5 px-2">Target Course ID</th>
+                <th class="py-2.5 px-2">Lead Status</th>
+              </tr>
+            </thead>
+            <tbody id="leadsExplorerTableBody" class="divide-y divide-slate-100">
+              <tr><td colspan="5" class="py-6 text-center text-slate-400 font-medium">Loading leads...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </main>
-  </div>
-
-  <!-- Modal: Live Offer Manager -->
-  <div id="offerModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-bold text-slate-900 text-sm">Manage Live Banner Offer & Commission</h3>
-        <button onclick="closeOfferModal()" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <form onsubmit="handleOfferSubmit(event)" class="space-y-3.5 text-xs">
-        <div>
-          <label class="font-semibold text-slate-700">Announcement / Banner Message</label>
-          <textarea id="offerInputText" rows="2" placeholder="e.g. Special Offer: 20% commission on all courses today!" class="w-full mt-1 p-2 border rounded-lg" required></textarea>
-        </div>
-        <div>
-          <label class="font-semibold text-slate-700">Offer Commission % (Auto-apply to all courses)</label>
-          <input type="number" id="offerCommPercent" min="1" max="100" placeholder="e.g. 20 (Leave blank for default)" class="w-full mt-1 p-2 border rounded-lg font-bold text-indigo-600" />
-        </div>
-        <div class="flex items-center gap-2 pt-1">
-          <input type="checkbox" id="offerActiveCheck" class="w-4 h-4 text-indigo-600 rounded">
-          <label for="offerActiveCheck" class="font-semibold text-slate-700">Make this offer live right now</label>
-        </div>
-        <button type="submit" id="saveOfferBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2.5 rounded-lg text-sm shadow mt-2">
-          Update Live Offer
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Modal: Add New Course -->
-  <div id="addCourseModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-bold text-slate-900 text-sm">Add New Course Link</h3>
-        <button onclick="closeAddCourseModal()" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <form onsubmit="handleAddCourseSubmit(event)" class="space-y-3 text-xs">
-        <div>
-          <label class="font-semibold text-slate-700">Course Store URL</label>
-          <input type="url" id="newCourseUrl" placeholder="https://obqype.courses.store/843481" class="w-full mt-1 p-2 border rounded-lg" required onchange="extractCourseId(this.value, 'newCourseId')" />
-        </div>
-        <div>
-          <label class="font-semibold text-slate-700">Course ID</label>
-          <input type="text" id="newCourseId" placeholder="843481" class="w-full mt-1 p-2 border rounded-lg font-mono font-bold" required />
-        </div>
-        <div>
-          <label class="font-semibold text-slate-700">Course Title</label>
-          <input type="text" id="newCourseTitle" placeholder="Course Name" class="w-full mt-1 p-2 border rounded-lg" required />
-        </div>
-        <div>
-          <label class="font-semibold text-slate-700">Image Thumbnail URL</label>
-          <input type="url" id="newCourseImg" placeholder="https://..." class="w-full mt-1 p-2 border rounded-lg" />
-        </div>
-        <div>
-          <label class="font-semibold text-slate-700">Default Commission %</label>
-          <input type="number" id="newCourseComm" value="10" min="1" max="100" class="w-full mt-1 p-2 border rounded-lg font-bold" required />
-        </div>
-        <button type="submit" id="saveCourseBtn" class="w-full bg-slate-900 text-white font-semibold py-2.5 rounded-lg text-sm mt-3">
-          Save Course
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Modal: Edit Existing Course -->
-  <div id="editCourseModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-bold text-slate-900 text-sm">Edit Course Details</h3>
-        <button onclick="closeEditCourseModal()" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <form onsubmit="handleEditCourseSubmit(event)" class="space-y-3 text-xs">
-        <div>
-          <label class="font-semibold text-slate-700">Course ID (Fixed)</label>
-          <input type="text" id="editCourseId" readonly class="w-full mt-1 p-2 border rounded-lg font-mono bg-slate-100 font-bold text-slate-600" />
-        </div>
-        <div>
-          <label class="font-semibold text-slate-700">Course Title</label>
-          <input type="text" id="editCourseTitle" class="w-full mt-1 p-2 border rounded-lg font-medium" required />
-        </div>
-        <div>
-          <label class="font-semibold text-slate-700">Course Store URL</label>
-          <input type="url" id="editCourseUrl" class="w-full mt-1 p-2 border rounded-lg" required />
-        </div>
-        <div>
-          <label class="font-semibold text-slate-700">Image Thumbnail URL</label>
-          <input type="url" id="editCourseImg" placeholder="https://..." class="w-full mt-1 p-2 border rounded-lg" />
-        </div>
-        <div>
-          <label class="font-semibold text-slate-700">Commission %</label>
-          <input type="number" id="editCourseComm" min="1" max="100" class="w-full mt-1 p-2 border rounded-lg font-bold text-indigo-600" required />
-        </div>
-        <button type="submit" id="updateCourseBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg text-sm mt-3 shadow">
-          Update Course Details
-        </button>
-      </form>
-    </div>
   </div>
 
   <script>
@@ -354,7 +297,8 @@
       adminSyncInterval = setInterval(async () => {
         if (!adminToken || isAdminSyncing) return;
 
-        const isSearchFocused = document.activeElement === document.getElementById("studentSearchInput");
+        const isSearchFocused = (document.activeElement === document.getElementById("studentSearchInput") ||
+                                 document.activeElement === document.getElementById("leadsExplorerSearch"));
         const isAnyModalOpen = !document.getElementById("offerModal").classList.contains("hidden") ||
                                !document.getElementById("addCourseModal").classList.contains("hidden") ||
                                !document.getElementById("editCourseModal").classList.contains("hidden");
@@ -409,6 +353,7 @@
 
       renderCharts(rawStudentsData);
       applyStudentFilters();
+      renderLeadsExplorerTable();
 
       // Courses Table Rendering
       const cTable = document.getElementById("adminCoursesTable");
@@ -441,10 +386,10 @@
         `;
       });
 
-      // Claims Table (With Pay, Reject Reason & Direct Delete Claim Button)
+      // Claims Table
       const clTable = document.getElementById("adminClaimsTable");
       clTable.innerHTML = currentClaimsList.length ? "" : `<tr><td colspan="7" class="py-4 text-center text-slate-400">No payout claims recorded.</td></tr>`;
-      currentClaimsList.forEach(cl => {
+      data.claims.forEach(cl => {
         const [claimId, phone, amount, method, details, date, status, txRef] = cl;
         const isPaid = status === 'Paid' || status === 'Approved';
         const isRejected = status === 'Rejected';
@@ -528,7 +473,12 @@
               <span class="text-slate-500 font-mono text-[11px]">${s.phone}</span>
             </td>
             <td class="py-2.5 px-2 text-slate-500">${s.lastLogin !== 'Never' ? new Date(s.lastLogin).toLocaleString() : 'Never'}</td>
-            <td class="py-2.5 px-2 font-bold">${s.totalLeads}</td>
+            <td class="py-2.5 px-2">
+              <button onclick="filterExplorerByStudent('${s.phone}')" class="font-bold text-indigo-600 hover:underline flex items-center gap-1" title="Click to view leads in Explorer below">
+                <span>${s.totalLeads}</span>
+                <i class="fa-solid fa-arrow-down text-[10px]"></i>
+              </button>
+            </td>
             <td class="py-2.5 px-2 font-bold text-indigo-600">${s.conversions}</td>
             <td class="py-2.5 px-2 font-bold text-slate-900">₹${s.totalEarned.toFixed(2)}</td>
             <td class="py-2.5 px-2 font-bold text-emerald-600">₹${s.availableBalance.toFixed(2)}</td>
@@ -548,7 +498,71 @@
       });
     }
 
-    // CSV REPORT DOWNLOAD (TOTAL LEADS, TOTAL SALES, TOTAL EARNED, TOTAL PAID, BALANCE)
+    // FILTER EXPLORER FROM DIRECTORY CLICK
+    function filterExplorerByStudent(phone) {
+      document.getElementById("leadsExplorerSearch").value = phone;
+      renderLeadsExplorerTable();
+      document.getElementById("leadsExplorerSearch").scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // RENDER LIVE REFERRAL LEADS EXPLORER TABLE (SEARCH STUDENT NAME OR PHONE)
+    function renderLeadsExplorerTable() {
+      const query = (document.getElementById("leadsExplorerSearch").value || "").toLowerCase().trim();
+      const tbody = document.getElementById("leadsExplorerTableBody");
+
+      // Aggregate all leads across all students
+      let allLeads = [];
+      rawStudentsData.forEach(s => {
+        const studentCleanPhone = s.phone.replace(/\D/g, "");
+        const studentName = s.name || "Student";
+        const localCached = JSON.parse(localStorage.getItem("local_leads_" + studentCleanPhone) || "[]");
+
+        localCached.forEach(l => {
+          allLeads.push({
+            studentName: studentName,
+            studentPhone: studentCleanPhone,
+            buyerPhone: (l.buyerPhone || "").replace(/\D/g, ""),
+            courseId: l.courseId || "General",
+            status: "Captured"
+          });
+        });
+      });
+
+      // Filter by query (Matches student name, student phone, or buyer phone)
+      let filtered = allLeads;
+      if (query) {
+        filtered = allLeads.filter(l => 
+          l.studentName.toLowerCase().includes(query) ||
+          l.studentPhone.includes(query) ||
+          l.buyerPhone.includes(query) ||
+          l.courseId.toLowerCase().includes(query)
+        );
+      }
+
+      document.getElementById("explorerTotalBadge").innerText = `${filtered.length} Leads`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 font-medium">${query ? 'Koi lead match nahi hui is search par.' : 'Abhi koi new lead capture nahi hui hai.'}</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = "";
+      filtered.forEach(l => {
+        tbody.innerHTML += `
+          <tr>
+            <td class="py-2.5 px-2 font-bold text-slate-900">${l.studentName}</td>
+            <td class="py-2.5 px-2 font-mono text-slate-500">${l.studentPhone}</td>
+            <td class="py-2.5 px-2 font-mono font-bold text-emerald-600">${l.buyerPhone}</td>
+            <td class="py-2.5 px-2 font-mono text-slate-600">${l.courseId}</td>
+            <td class="py-2.5 px-2">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700">Captured / Clicked</span>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    // CSV REPORT DOWNLOAD
     function downloadReportCSV() {
       const list = getFilteredStudents();
       if (!list || list.length === 0) {
@@ -556,7 +570,6 @@
         return;
       }
 
-      // Calculate total payouts paid per student from claims
       const paidMap = {};
       const pendingMap = {};
       currentClaimsList.forEach(cl => {
@@ -571,7 +584,6 @@
         }
       });
 
-      // CSV Headers
       const headers = [
         "Student Name",
         "Phone Number",
