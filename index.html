@@ -11,44 +11,36 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAKUIZI7zy6Cypfb9D4VgRyONyQmxUPh_0n9THdfJ96lpZDnrDX3Qv7rUEUTuHW8XX/exec";
-
-    // 1. AUTO-REDIRECT BUYER (Zero dependency on redirect.html)
-    const params = new URLSearchParams(window.location.search);
-    const courseId = params.get("courseId");
-    const referrerPhone = params.get("ref");
-
-    if (courseId && referrerPhone) {
-      document.body.innerHTML = `
-        <div class="min-h-screen flex items-center justify-center bg-slate-50">
-          <div class="text-center p-8 bg-white rounded-2xl shadow-xl max-w-sm w-full mx-4 border border-slate-100">
-            <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 text-xl">
-              <i class="fa-solid fa-spinner fa-spin"></i>
-            </div>
-            <h2 class="text-lg font-bold text-slate-900 mb-1">Redirecting to Course...</h2>
-            <p class="text-xs text-slate-500">Securing your referral link.</p>
-          </div>
-        </div>
-      `;
-      try {
-        fetch(SCRIPT_URL, {
-          method: "POST",
-          mode: "no-cors",
-          body: JSON.stringify({
-            action: "recordLead",
-            referrerPhone: referrerPhone,
-            buyerPhone: "Click_" + new Date().getTime(),
-            courseId: courseId
-          })
-        });
-      } catch (err) {}
-
-      setTimeout(() => {
-        window.location.replace(`https://obqype.courses.store/${courseId}`);
-      }, 550);
-    }
   </script>
 
-  <!-- Login Section -->
+  <!-- 1. BUYER LEAD CAPTURE SCREEN (When Referral Link is Opened) -->
+  <div id="buyerCaptureSection" class="hidden min-h-screen flex items-center justify-center p-4 bg-slate-100">
+    <div class="bg-white p-7 rounded-2xl shadow-xl max-w-sm w-full border border-slate-200 text-center">
+      <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl font-bold shadow-inner">
+        <i class="fa-solid fa-gift"></i>
+      </div>
+      <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">Exclusive Referral Discount</h2>
+      <p class="text-xs text-slate-500 mt-1 mb-5">Course offer unlock karne ke liye apna mobile number enter karein</p>
+
+      <form id="buyerForm" onsubmit="handleBuyerSubmit(event)" class="space-y-4 text-left">
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Your Mobile Number</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 font-medium">+91</span>
+            <input type="tel" id="buyerPhone" required maxlength="10" placeholder="9876543210"
+              class="w-full pl-12 pr-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 font-medium text-sm" />
+          </div>
+          <p class="text-[10px] text-slate-400 mt-1">Usi number ko enter karein jisse aap course buy karenge.</p>
+        </div>
+        <button type="submit" id="buyerProceedBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-lg transition-all shadow text-sm flex items-center justify-center gap-2">
+          <span>Proceed to Course</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. STUDENT LOGIN SECTION -->
   <div id="loginSection" class="min-h-screen flex items-center justify-center p-4">
     <div class="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-slate-100">
       <div class="text-center mb-6">
@@ -124,15 +116,13 @@
     </div>
   </div>
 
-  <!-- Dashboard Section -->
+  <!-- 3. STUDENT DASHBOARD SECTION -->
   <div id="dashboardSection" class="hidden min-h-screen flex flex-col">
-    <!-- Top Announcement Banner -->
     <div id="liveOfferBanner" class="hidden bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white text-xs font-bold py-2.5 px-4 text-center shadow-sm">
       <span class="inline-block animate-pulse mr-1.5"><i class="fa-solid fa-fire"></i></span>
       <span id="liveOfferText">Special Offer Active!</span>
     </div>
 
-    <!-- Header -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
         <div class="flex items-center space-x-3">
@@ -157,8 +147,6 @@
     </header>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
-      
-      <!-- Metrics Overview Cards -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <p class="text-xs text-slate-500 font-medium">Total Clicks/Leads</p>
@@ -185,7 +173,6 @@
         </div>
       </div>
 
-      <!-- Active Courses -->
       <div class="space-y-4">
         <div class="flex justify-between items-center">
           <h2 class="text-lg font-bold text-slate-900">Your Referral Courses</h2>
@@ -194,9 +181,7 @@
         <div id="coursesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
       </div>
 
-      <!-- Tables -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
-        <!-- Sales Attribution Log -->
         <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
           <h3 class="font-bold text-sm text-slate-900 mb-3"><i class="fa-solid fa-receipt text-indigo-500 mr-2"></i>Sales Attribution Log</h3>
           <div class="overflow-x-auto max-h-60 overflow-y-auto text-xs">
@@ -213,7 +198,6 @@
           </div>
         </div>
 
-        <!-- Payout Requests -->
         <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
           <h3 class="font-bold text-sm text-slate-900 mb-3"><i class="fa-solid fa-building-columns text-emerald-500 mr-2"></i>Payout Requests</h3>
           <div class="overflow-x-auto max-h-60 overflow-y-auto text-xs">
@@ -311,6 +295,49 @@
     let isStudentSyncing = false;
     let studentSyncInterval = null;
 
+    // Detect referral parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetCourseId = urlParams.get("courseId");
+    const targetReferrerPhone = urlParams.get("ref");
+
+    // Check if this is a buyer clicking a referral link
+    if (targetCourseId && targetReferrerPhone) {
+      document.getElementById("loginSection").classList.add("hidden");
+      document.getElementById("buyerCaptureSection").classList.remove("hidden");
+    }
+
+    async function handleBuyerSubmit(e) {
+      e.preventDefault();
+      const bPhone = document.getElementById("buyerPhone").value.trim().replace(/\D/g, "");
+      if (bPhone.length < 10) {
+        alert("Kripya apna 10-digit mobile number enter karein.");
+        return;
+      }
+
+      const btn = document.getElementById("buyerProceedBtn");
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Redirecting...`;
+
+      // Record buyer's real phone with referrer
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          body: JSON.stringify({
+            action: "recordLead",
+            referrerPhone: targetReferrerPhone,
+            buyerPhone: bPhone,
+            courseId: targetCourseId
+          })
+        });
+      } catch (err) {}
+
+      // Forward directly to Classplus Course Store
+      setTimeout(() => {
+        window.location.replace(`https://obqype.courses.store/${targetCourseId}`);
+      }, 350);
+    }
+
     function showAlert(msg) {
       const el = document.getElementById("authAlert");
       el.innerText = msg;
@@ -385,7 +412,6 @@
           activePassword = pass;
           studentData = data;
 
-          // Save persistent login in localStorage
           localStorage.setItem("student_auth_phone", activePhone);
           localStorage.setItem("student_auth_pass", activePassword);
 
@@ -440,7 +466,6 @@
       btn.innerText = "Save & Enter Dashboard";
     }
 
-    // Every 2.5 seconds real-time auto-sync for student portal
     function startStudentRealtimeSync() {
       if (studentSyncInterval) clearInterval(studentSyncInterval);
       studentSyncInterval = setInterval(async () => {
@@ -523,7 +548,7 @@
       });
 
       const sBody = document.getElementById("salesTableBody");
-      sBody.innerHTML = studentData.sales.length ? "" : `<tr><td colspan="3" class="py-4 text-center text-slate-400">No successful sales yet.</td></tr>`;
+      sBody.innerHTML = studentData.sales.length ? "" : `<tr><td colspan="3" class="py-4 text-center text-slate-400">No referral sales recorded yet.</td></tr>`;
       studentData.sales.forEach(s => {
         sBody.innerHTML += `
           <tr>
@@ -547,7 +572,8 @@
       cBody.innerHTML = studentData.claims.length ? "" : `<tr><td colspan="4" class="py-4 text-center text-slate-400">No payout claims yet.</td></tr>`;
       studentData.claims.forEach(c => {
         const isPaid = c.status === "Paid" || c.status === "Approved";
-        const color = isPaid ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700";
+        const isRejected = c.status === "Rejected";
+        const color = isPaid ? "bg-emerald-100 text-emerald-700" : (isRejected ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700");
         cBody.innerHTML += `
           <tr>
             <td class="py-2.5 px-2 font-mono font-medium">${c.claimId}</td>
@@ -707,8 +733,10 @@
       location.reload();
     }
 
-    // Auto-restore student session on page load/refresh
     window.addEventListener("DOMContentLoaded", () => {
+      // Don't auto-login if opening a referral link as a buyer
+      if (targetCourseId && targetReferrerPhone) return;
+
       const savedPhone = localStorage.getItem("student_auth_phone");
       const savedPass = localStorage.getItem("student_auth_pass");
       if (savedPhone && savedPass) {
