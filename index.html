@@ -184,7 +184,7 @@
         <div id="coursesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
       </div>
 
-      <!-- 3 Tables: Leads Captured (Direct From Sheet), Sales Log, Payout Requests -->
+      <!-- 3 Tables: Leads Captured, Sales Log, Payout Requests -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
         
         <!-- Table 1: Captured Leads Directly from Sheet -->
@@ -520,7 +520,7 @@
       document.getElementById("dashboardSection").classList.remove("hidden");
 
       if (studentData.offer && studentData.offer.text) {
-        const commMsg = studentData.offer.commissionPercent 
+        const commMsg = (studentData.offer.commissionPercent !== null && studentData.offer.commissionPercent !== undefined)
           ? ` (Special ${studentData.offer.commissionPercent}% Bonus Active!)` 
           : "";
         document.getElementById("liveOfferText").innerText = studentData.offer.text + commMsg;
@@ -576,7 +576,7 @@
         grid.appendChild(card);
       });
 
-      // 1. RENDER CAPTURED LEADS (DIRECT FROM GOOGLE SHEET - NEVER DISAPPEARS)
+      // 1. RENDER CAPTURED LEADS
       const leadsBody = document.getElementById("leadsTableBody");
       const convertedBuyerPhones = new Set((studentData.sales || []).map(s => s.buyerPhone.replace(/\D/g, "")));
       const rawLeads = studentData.capturedLeads || [];
@@ -599,16 +599,17 @@
         `;
       });
 
-      // 2. RENDER SALES TABLE (FULL UNMASKED NUMBERS)
+      // 2. RENDER SALES TABLE (With Protected Historical Rate 15% vs 9%)
       const sBody = document.getElementById("salesTableBody");
       sBody.innerHTML = studentData.sales.length ? "" : `<tr><td colspan="3" class="py-4 text-center text-slate-400">No successful sales yet.</td></tr>`;
       studentData.sales.forEach(s => {
         const buyerFullNum = s.buyerPhone.replace(/\D/g, "");
+        const formattedDate = s.date ? new Date(s.date).toLocaleDateString() : 'Sale';
         sBody.innerHTML += `
           <tr>
             <td class="py-2.5 px-2">
               <span class="font-medium block text-slate-900">${s.courseName || s.courseId}</span>
-              <span class="text-[10px] text-slate-400 font-mono">${s.date ? new Date(s.date).toLocaleDateString() : ''}</span>
+              <span class="text-[10px] text-slate-400 font-mono">${formattedDate}</span>
             </td>
             <td class="py-2.5 px-2">
               <span class="font-bold block text-slate-900 font-mono">${buyerFullNum}</span>
@@ -616,7 +617,7 @@
             </td>
             <td class="py-2.5 px-2 font-bold text-emerald-600">
               ₹${Number(s.earning || 0).toFixed(2)}
-              <span class="block text-[10px] text-slate-400 font-normal">(${s.rate}%)</span>
+              <span class="block text-[10px] text-indigo-600 font-bold">(${s.rate}%)</span>
             </td>
           </tr>
         `;
